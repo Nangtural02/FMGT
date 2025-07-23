@@ -1,0 +1,21 @@
+[3.415s] Invoking command in '/home/jy/fmgt/build/fmgt4': PYTHONPATH=/home/jy/fmgt/build/fmgt4/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jy/fmgt/install/fmgt4/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/jy/fmgt/build/fmgt4/build --no-deps symlink_data
+[4.836s] running develop
+[5.852s] running egg_info
+[5.856s] writing fmgt4.egg-info/PKG-INFO
+[5.856s] writing dependency_links to fmgt4.egg-info/dependency_links.txt
+[5.857s] writing entry points to fmgt4.egg-info/entry_points.txt
+[5.860s] writing requirements to fmgt4.egg-info/requires.txt
+[5.860s] writing top-level names to fmgt4.egg-info/top_level.txt
+[5.865s] reading manifest file 'fmgt4.egg-info/SOURCES.txt'
+[5.868s] writing manifest file 'fmgt4.egg-info/SOURCES.txt'
+[5.875s] running build_ext
+[5.876s] Creating /home/jy/fmgt/install/fmgt4/lib/python3.10/site-packages/fmgt4.egg-link (link to .)
+[5.880s] Installing estimator script to /home/jy/fmgt/install/fmgt4/lib/fmgt4
+[5.882s] Installing follower script to /home/jy/fmgt/install/fmgt4/lib/fmgt4
+[5.883s] Installing publisher script to /home/jy/fmgt/install/fmgt4/lib/fmgt4
+[5.887s] 
+[5.889s] Installed /home/jy/fmgt/build/fmgt4
+[5.890s] running symlink_data
+[5.891s] creating /home/jy/fmgt/install/fmgt4/share/fmgt4/launch
+[5.901s] symbolically linking /home/jy/fmgt/build/fmgt4/launch/fmgt.launch.py -> /home/jy/fmgt/install/fmgt4/share/fmgt4/launch
+[6.039s] Invoked command in '/home/jy/fmgt/build/fmgt4' returned '0': PYTHONPATH=/home/jy/fmgt/build/fmgt4/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jy/fmgt/install/fmgt4/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/jy/fmgt/build/fmgt4/build --no-deps symlink_data

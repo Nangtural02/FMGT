@@ -1,0 +1,9 @@
+source;share/fmgt3/hook/pythonpath.ps1
+source;share/fmgt3/hook/pythonpath.dsv
+source;share/fmgt3/hook/pythonpath.sh
+source;share/fmgt3/hook/ament_prefix_path.ps1
+source;share/fmgt3/hook/ament_prefix_path.dsv
+source;share/fmgt3/hook/ament_prefix_path.sh
+source;../../build/fmgt3/share/fmgt3/hook/pythonpath_develop.ps1
+source;../../build/fmgt3/share/fmgt3/hook/pythonpath_develop.dsv
+source;../../build/fmgt3/share/fmgt3/hook/pythonpath_develop.sh

@@ -1,0 +1,19 @@
+[10.629s] Invoking command in '/home/jy/fmgt/build/fmgt1': PYTHONPATH=/home/jy/fmgt/build/fmgt1/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jy/fmgt/install/fmgt1/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/jy/fmgt/build/fmgt1/build --no-deps symlink_data
+[12.787s] running develop
+[14.152s] running egg_info
+[14.154s] writing fmgt1.egg-info/PKG-INFO
+[14.156s] writing dependency_links to fmgt1.egg-info/dependency_links.txt
+[14.158s] writing entry points to fmgt1.egg-info/entry_points.txt
+[14.160s] writing requirements to fmgt1.egg-info/requires.txt
+[14.162s] writing top-level names to fmgt1.egg-info/top_level.txt
+[14.172s] reading manifest file 'fmgt1.egg-info/SOURCES.txt'
+[14.176s] writing manifest file 'fmgt1.egg-info/SOURCES.txt'
+[14.216s] running build_ext
+[14.218s] Creating /home/jy/fmgt/install/fmgt1/lib/python3.10/site-packages/fmgt1.egg-link (link to .)
+[14.232s] Installing calculator script to /home/jy/fmgt/install/fmgt1/lib/fmgt1
+[14.235s] Installing controller script to /home/jy/fmgt/install/fmgt1/lib/fmgt1
+[14.238s] Installing publisher script to /home/jy/fmgt/install/fmgt1/lib/fmgt1
+[14.240s] 
+[14.243s] Installed /home/jy/fmgt/build/fmgt1
+[14.245s] running symlink_data
+[14.787s] Invoked command in '/home/jy/fmgt/build/fmgt1' returned '0': PYTHONPATH=/home/jy/fmgt/build/fmgt1/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jy/fmgt/install/fmgt1/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/jy/fmgt/build/fmgt1/build --no-deps symlink_data

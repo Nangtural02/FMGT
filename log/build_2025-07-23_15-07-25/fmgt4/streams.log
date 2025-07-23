@@ -1,0 +1,19 @@
+[4.433s] Invoking command in '/home/jy/fmgt/build/fmgt4': PYTHONPATH=/home/jy/fmgt/build/fmgt4/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jy/fmgt/install/fmgt4/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/jy/fmgt/build/fmgt4/build --no-deps symlink_data
+[6.393s] running develop
+[7.922s] running egg_info
+[7.924s] writing fmgt4.egg-info/PKG-INFO
+[7.928s] writing dependency_links to fmgt4.egg-info/dependency_links.txt
+[7.932s] writing entry points to fmgt4.egg-info/entry_points.txt
+[7.938s] writing requirements to fmgt4.egg-info/requires.txt
+[7.944s] writing top-level names to fmgt4.egg-info/top_level.txt
+[7.954s] reading manifest file 'fmgt4.egg-info/SOURCES.txt'
+[7.960s] writing manifest file 'fmgt4.egg-info/SOURCES.txt'
+[7.973s] running build_ext
+[7.977s] Creating /home/jy/fmgt/install/fmgt4/lib/python3.10/site-packages/fmgt4.egg-link (link to .)
+[7.986s] Installing estimator script to /home/jy/fmgt/install/fmgt4/lib/fmgt4
+[7.992s] Installing follower script to /home/jy/fmgt/install/fmgt4/lib/fmgt4
+[7.997s] Installing publisher script to /home/jy/fmgt/install/fmgt4/lib/fmgt4
+[8.003s] 
+[8.006s] Installed /home/jy/fmgt/build/fmgt4
+[8.010s] running symlink_data
+[8.225s] Invoked command in '/home/jy/fmgt/build/fmgt4' returned '0': PYTHONPATH=/home/jy/fmgt/build/fmgt4/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jy/fmgt/install/fmgt4/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/jy/fmgt/build/fmgt4/build --no-deps symlink_data
