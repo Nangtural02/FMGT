@@ -1,0 +1,206 @@
+[0.000000] (-) TimerEvent: {}
+[0.001772] (fmgt1) JobQueued: {'identifier': 'fmgt1', 'dependencies': OrderedDict()}
+[0.002459] (fmgt2) JobQueued: {'identifier': 'fmgt2', 'dependencies': OrderedDict()}
+[0.002947] (fmgt3) JobQueued: {'identifier': 'fmgt3', 'dependencies': OrderedDict()}
+[0.003162] (fmgt4) JobQueued: {'identifier': 'fmgt4', 'dependencies': OrderedDict()}
+[0.003451] (fmgt1) JobStarted: {'identifier': 'fmgt1'}
+[0.051401] (fmgt2) JobStarted: {'identifier': 'fmgt2'}
+[0.077668] (fmgt3) JobStarted: {'identifier': 'fmgt3'}
+[0.099325] (-) TimerEvent: {}
+[0.104955] (fmgt4) JobStarted: {'identifier': 'fmgt4'}
+[0.199673] (-) TimerEvent: {}
+[0.300935] (-) TimerEvent: {}
+[0.402942] (-) TimerEvent: {}
+[0.503901] (-) TimerEvent: {}
+[0.604645] (-) TimerEvent: {}
+[0.705348] (-) TimerEvent: {}
+[0.806045] (-) TimerEvent: {}
+[0.906760] (-) TimerEvent: {}
+[1.007447] (-) TimerEvent: {}
+[1.108309] (-) TimerEvent: {}
+[1.209148] (-) TimerEvent: {}
+[1.309985] (-) TimerEvent: {}
+[1.411126] (-) TimerEvent: {}
+[1.511933] (-) TimerEvent: {}
+[1.612730] (-) TimerEvent: {}
+[1.713449] (-) TimerEvent: {}
+[1.814152] (-) TimerEvent: {}
+[1.914926] (-) TimerEvent: {}
+[2.015626] (-) TimerEvent: {}
+[2.116327] (-) TimerEvent: {}
+[2.217020] (-) TimerEvent: {}
+[2.317775] (-) TimerEvent: {}
+[2.418546] (-) TimerEvent: {}
+[2.519474] (-) TimerEvent: {}
+[2.620672] (-) TimerEvent: {}
+[2.722017] (-) TimerEvent: {}
+[2.822891] (-) TimerEvent: {}
+[2.923669] (-) TimerEvent: {}
+[3.024403] (-) TimerEvent: {}
+[3.125144] (-) TimerEvent: {}
+[3.226116] (-) TimerEvent: {}
+[3.326887] (-) TimerEvent: {}
+[3.427591] (-) TimerEvent: {}
+[3.528343] (-) TimerEvent: {}
+[3.629077] (-) TimerEvent: {}
+[3.729967] (-) TimerEvent: {}
+[3.831166] (-) TimerEvent: {}
+[3.932006] (-) TimerEvent: {}
+[4.032779] (-) TimerEvent: {}
+[4.133675] (-) TimerEvent: {}
+[4.234477] (-) TimerEvent: {}
+[4.335166] (-) TimerEvent: {}
+[4.435889] (-) TimerEvent: {}
+[4.536600] (-) TimerEvent: {}
+[4.637325] (-) TimerEvent: {}
+[4.738062] (-) TimerEvent: {}
+[4.838816] (-) TimerEvent: {}
+[4.939804] (-) TimerEvent: {}
+[5.042600] (-) TimerEvent: {}
+[5.143620] (-) TimerEvent: {}
+[5.245211] (-) TimerEvent: {}
+[5.346592] (-) TimerEvent: {}
+[5.448081] (-) TimerEvent: {}
+[5.549540] (-) TimerEvent: {}
+[5.650887] (-) TimerEvent: {}
+[5.752206] (-) TimerEvent: {}
+[5.853408] (-) TimerEvent: {}
+[5.954772] (-) TimerEvent: {}
+[6.056111] (-) TimerEvent: {}
+[6.157311] (-) TimerEvent: {}
+[6.258547] (-) TimerEvent: {}
+[6.359777] (-) TimerEvent: {}
+[6.461014] (-) TimerEvent: {}
+[6.563409] (-) TimerEvent: {}
+[6.665849] (-) TimerEvent: {}
+[6.768612] (-) TimerEvent: {}
+[6.871245] (-) TimerEvent: {}
+[6.973688] (-) TimerEvent: {}
+[7.076248] (-) TimerEvent: {}
+[7.178608] (-) TimerEvent: {}
+[7.281083] (-) TimerEvent: {}
+[7.384896] (-) TimerEvent: {}
+[7.489819] (-) TimerEvent: {}
+[7.595231] (-) TimerEvent: {}
+[7.610339] (fmgt2) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'develop', '--editable', '--build-directory', '/home/jy/fmgt/build/fmgt2/build', '--no-deps', 'symlink_data'], 'cwd': '/home/jy/fmgt/build/fmgt2', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'USER': 'jy', 'SSH_CLIENT': '192.168.0.23 53241 22', 'XDG_SESSION_TYPE': 'tty', 'GIT_ASKPASS': '/home/jy/.vscode-server/cli/servers/Stable-7adae6a56e34cb64d08899664b814cf620465925/server/extensions/git/dist/askpass.sh', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/aarch64-linux-gnu:/opt/ros/humble/lib', 'BROWSER': '/home/jy/.vscode-server/cli/servers/Stable-7adae6a56e34cb64d08899664b814cf620465925/server/bin/helpers/browser.sh', 'MOTD_SHOWN': 'pam', 'HOME': '/home/jy', 'TERM_PROGRAM_VERSION': '1.102.1', 'VSCODE_IPC_HOOK_CLI': '/run/user/1000/vscode-ipc-686eb6a3-21d6-4185-bd45-202b5f6df02d.sock', 'ROS_PYTHON_VERSION': '3', 'VSCODE_GIT_ASKPASS_MAIN': '/home/jy/.vscode-server/cli/servers/Stable-7adae6a56e34cb64d08899664b814cf620465925/server/extensions/git/dist/askpass-main.js', 'VSCODE_GIT_ASKPASS_NODE': '/home/jy/.vscode-server/cli/servers/Stable-7adae6a56e34cb64d08899664b814cf620465925/server/node', 'SSL_CERT_FILE': '/usr/lib/ssl/certs/ca-certificates.crt', 'PYDEVD_DISABLE_FILE_VALIDATION': '1', 'BUNDLED_DEBUGPY_PATH': '/home/jy/.vscode-server/extensions/ms-python.debugpy-2025.10.0-linux-arm64/bundled/libs/debugpy', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLORTERM': 'truecolor', 'ROS_DISTRO': 'humble', 'LOGNAME': 'jy', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'XDG_SESSION_CLASS': 'user', 'TERM': 'xterm-256color', 'XDG_SESSION_ID': '5', 'ROS_LOCALHOST_ONLY': '0', 'PATH': '/home/jy/.vscode-server/cli/servers/Stable-7adae6a56e34cb64d08899664b814cf620465925/server/bin/remote-cli:/home/jy/.local/bin:/opt/ros/humble/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/jy/.vscode-server/extensions/ms-python.debugpy-2025.10.0-linux-arm64/bundled/scripts/noConfigScripts', 'XDG_RUNTIME_DIR': '/run/user/1000', 'SSL_CERT_DIR': '/usr/lib/ssl/certs', 'VSCODE_DEBUGPY_ADAPTER_ENDPOINTS': '/home/jy/.vscode-server/extensions/ms-python.debugpy-2025.10.0-linux-arm64/.noConfigDebugAdapterEndpoints/endpoint-47fcf17876450f51.txt', 'LANG': 'en_US.UTF-8', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:', 'VSCODE_GIT_IPC_HANDLE': '/run/user/1000/vscode-git-6a4e11aee5.sock', 'TERM_PROGRAM': 'vscode', 'AMENT_PREFIX_PATH': '/opt/ros/humble', 'SHELL': '/bin/bash', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS': '', 'PWD': '/home/jy/fmgt/build/fmgt2', 'LC_ALL': 'en_US.UTF-8', 'SSH_CONNECTION': '192.168.0.23 53241 192.168.0.5 22', 'XDG_DATA_DIRS': '/usr/share/gnome:/usr/local/share:/usr/share:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/jy/fmgt/build/fmgt2/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jy/fmgt/install/fmgt2/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages', 'COLCON': '1'}, 'shell': False}
+[7.677316] (fmgt1) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'develop', '--editable', '--build-directory', '/home/jy/fmgt/build/fmgt1/build', '--no-deps', 'symlink_data'], 'cwd': '/home/jy/fmgt/build/fmgt1', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'USER': 'jy', 'SSH_CLIENT': '192.168.0.23 53241 22', 'XDG_SESSION_TYPE': 'tty', 'GIT_ASKPASS': '/home/jy/.vscode-server/cli/servers/Stable-7adae6a56e34cb64d08899664b814cf620465925/server/extensions/git/dist/askpass.sh', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/aarch64-linux-gnu:/opt/ros/humble/lib', 'BROWSER': '/home/jy/.vscode-server/cli/servers/Stable-7adae6a56e34cb64d08899664b814cf620465925/server/bin/helpers/browser.sh', 'MOTD_SHOWN': 'pam', 'HOME': '/home/jy', 'TERM_PROGRAM_VERSION': '1.102.1', 'VSCODE_IPC_HOOK_CLI': '/run/user/1000/vscode-ipc-686eb6a3-21d6-4185-bd45-202b5f6df02d.sock', 'ROS_PYTHON_VERSION': '3', 'VSCODE_GIT_ASKPASS_MAIN': '/home/jy/.vscode-server/cli/servers/Stable-7adae6a56e34cb64d08899664b814cf620465925/server/extensions/git/dist/askpass-main.js', 'VSCODE_GIT_ASKPASS_NODE': '/home/jy/.vscode-server/cli/servers/Stable-7adae6a56e34cb64d08899664b814cf620465925/server/node', 'SSL_CERT_FILE': '/usr/lib/ssl/certs/ca-certificates.crt', 'PYDEVD_DISABLE_FILE_VALIDATION': '1', 'BUNDLED_DEBUGPY_PATH': '/home/jy/.vscode-server/extensions/ms-python.debugpy-2025.10.0-linux-arm64/bundled/libs/debugpy', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLORTERM': 'truecolor', 'ROS_DISTRO': 'humble', 'LOGNAME': 'jy', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'XDG_SESSION_CLASS': 'user', 'TERM': 'xterm-256color', 'XDG_SESSION_ID': '5', 'ROS_LOCALHOST_ONLY': '0', 'PATH': '/home/jy/.vscode-server/cli/servers/Stable-7adae6a56e34cb64d08899664b814cf620465925/server/bin/remote-cli:/home/jy/.local/bin:/opt/ros/humble/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/jy/.vscode-server/extensions/ms-python.debugpy-2025.10.0-linux-arm64/bundled/scripts/noConfigScripts', 'XDG_RUNTIME_DIR': '/run/user/1000', 'SSL_CERT_DIR': '/usr/lib/ssl/certs', 'VSCODE_DEBUGPY_ADAPTER_ENDPOINTS': '/home/jy/.vscode-server/extensions/ms-python.debugpy-2025.10.0-linux-arm64/.noConfigDebugAdapterEndpoints/endpoint-47fcf17876450f51.txt', 'LANG': 'en_US.UTF-8', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:', 'VSCODE_GIT_IPC_HANDLE': '/run/user/1000/vscode-git-6a4e11aee5.sock', 'TERM_PROGRAM': 'vscode', 'AMENT_PREFIX_PATH': '/opt/ros/humble', 'SHELL': '/bin/bash', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS': '', 'PWD': '/home/jy/fmgt/build/fmgt1', 'LC_ALL': 'en_US.UTF-8', 'SSH_CONNECTION': '192.168.0.23 53241 192.168.0.5 22', 'XDG_DATA_DIRS': '/usr/share/gnome:/usr/local/share:/usr/share:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/jy/fmgt/build/fmgt1/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jy/fmgt/install/fmgt1/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages', 'COLCON': '1'}, 'shell': False}
+[7.698182] (-) TimerEvent: {}
+[7.707932] (fmgt4) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'develop', '--editable', '--build-directory', '/home/jy/fmgt/build/fmgt4/build', '--no-deps', 'symlink_data'], 'cwd': '/home/jy/fmgt/build/fmgt4', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'USER': 'jy', 'SSH_CLIENT': '192.168.0.23 53241 22', 'XDG_SESSION_TYPE': 'tty', 'GIT_ASKPASS': '/home/jy/.vscode-server/cli/servers/Stable-7adae6a56e34cb64d08899664b814cf620465925/server/extensions/git/dist/askpass.sh', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/aarch64-linux-gnu:/opt/ros/humble/lib', 'BROWSER': '/home/jy/.vscode-server/cli/servers/Stable-7adae6a56e34cb64d08899664b814cf620465925/server/bin/helpers/browser.sh', 'MOTD_SHOWN': 'pam', 'HOME': '/home/jy', 'TERM_PROGRAM_VERSION': '1.102.1', 'VSCODE_IPC_HOOK_CLI': '/run/user/1000/vscode-ipc-686eb6a3-21d6-4185-bd45-202b5f6df02d.sock', 'ROS_PYTHON_VERSION': '3', 'VSCODE_GIT_ASKPASS_MAIN': '/home/jy/.vscode-server/cli/servers/Stable-7adae6a56e34cb64d08899664b814cf620465925/server/extensions/git/dist/askpass-main.js', 'VSCODE_GIT_ASKPASS_NODE': '/home/jy/.vscode-server/cli/servers/Stable-7adae6a56e34cb64d08899664b814cf620465925/server/node', 'SSL_CERT_FILE': '/usr/lib/ssl/certs/ca-certificates.crt', 'PYDEVD_DISABLE_FILE_VALIDATION': '1', 'BUNDLED_DEBUGPY_PATH': '/home/jy/.vscode-server/extensions/ms-python.debugpy-2025.10.0-linux-arm64/bundled/libs/debugpy', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLORTERM': 'truecolor', 'ROS_DISTRO': 'humble', 'LOGNAME': 'jy', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'XDG_SESSION_CLASS': 'user', 'TERM': 'xterm-256color', 'XDG_SESSION_ID': '5', 'ROS_LOCALHOST_ONLY': '0', 'PATH': '/home/jy/.vscode-server/cli/servers/Stable-7adae6a56e34cb64d08899664b814cf620465925/server/bin/remote-cli:/home/jy/.local/bin:/opt/ros/humble/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/jy/.vscode-server/extensions/ms-python.debugpy-2025.10.0-linux-arm64/bundled/scripts/noConfigScripts', 'XDG_RUNTIME_DIR': '/run/user/1000', 'SSL_CERT_DIR': '/usr/lib/ssl/certs', 'VSCODE_DEBUGPY_ADAPTER_ENDPOINTS': '/home/jy/.vscode-server/extensions/ms-python.debugpy-2025.10.0-linux-arm64/.noConfigDebugAdapterEndpoints/endpoint-47fcf17876450f51.txt', 'LANG': 'en_US.UTF-8', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:', 'VSCODE_GIT_IPC_HANDLE': '/run/user/1000/vscode-git-6a4e11aee5.sock', 'TERM_PROGRAM': 'vscode', 'AMENT_PREFIX_PATH': '/opt/ros/humble', 'SHELL': '/bin/bash', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS': '', 'PWD': '/home/jy/fmgt/build/fmgt4', 'LC_ALL': 'en_US.UTF-8', 'SSH_CONNECTION': '192.168.0.23 53241 192.168.0.5 22', 'XDG_DATA_DIRS': '/usr/share/gnome:/usr/local/share:/usr/share:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/jy/fmgt/build/fmgt4/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jy/fmgt/install/fmgt4/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages', 'COLCON': '1'}, 'shell': False}
+[7.736031] (fmgt3) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'develop', '--editable', '--build-directory', '/home/jy/fmgt/build/fmgt3/build', '--no-deps', 'symlink_data'], 'cwd': '/home/jy/fmgt/build/fmgt3', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'USER': 'jy', 'SSH_CLIENT': '192.168.0.23 53241 22', 'XDG_SESSION_TYPE': 'tty', 'GIT_ASKPASS': '/home/jy/.vscode-server/cli/servers/Stable-7adae6a56e34cb64d08899664b814cf620465925/server/extensions/git/dist/askpass.sh', 'SHLVL': '1', 'LD_LIBRARY_PATH': '/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/aarch64-linux-gnu:/opt/ros/humble/lib', 'BROWSER': '/home/jy/.vscode-server/cli/servers/Stable-7adae6a56e34cb64d08899664b814cf620465925/server/bin/helpers/browser.sh', 'MOTD_SHOWN': 'pam', 'HOME': '/home/jy', 'TERM_PROGRAM_VERSION': '1.102.1', 'VSCODE_IPC_HOOK_CLI': '/run/user/1000/vscode-ipc-686eb6a3-21d6-4185-bd45-202b5f6df02d.sock', 'ROS_PYTHON_VERSION': '3', 'VSCODE_GIT_ASKPASS_MAIN': '/home/jy/.vscode-server/cli/servers/Stable-7adae6a56e34cb64d08899664b814cf620465925/server/extensions/git/dist/askpass-main.js', 'VSCODE_GIT_ASKPASS_NODE': '/home/jy/.vscode-server/cli/servers/Stable-7adae6a56e34cb64d08899664b814cf620465925/server/node', 'SSL_CERT_FILE': '/usr/lib/ssl/certs/ca-certificates.crt', 'PYDEVD_DISABLE_FILE_VALIDATION': '1', 'BUNDLED_DEBUGPY_PATH': '/home/jy/.vscode-server/extensions/ms-python.debugpy-2025.10.0-linux-arm64/bundled/libs/debugpy', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLORTERM': 'truecolor', 'ROS_DISTRO': 'humble', 'LOGNAME': 'jy', '_': '/usr/bin/colcon', 'ROS_VERSION': '2', 'XDG_SESSION_CLASS': 'user', 'TERM': 'xterm-256color', 'XDG_SESSION_ID': '5', 'ROS_LOCALHOST_ONLY': '0', 'PATH': '/home/jy/.vscode-server/cli/servers/Stable-7adae6a56e34cb64d08899664b814cf620465925/server/bin/remote-cli:/home/jy/.local/bin:/opt/ros/humble/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/jy/.vscode-server/extensions/ms-python.debugpy-2025.10.0-linux-arm64/bundled/scripts/noConfigScripts', 'XDG_RUNTIME_DIR': '/run/user/1000', 'SSL_CERT_DIR': '/usr/lib/ssl/certs', 'VSCODE_DEBUGPY_ADAPTER_ENDPOINTS': '/home/jy/.vscode-server/extensions/ms-python.debugpy-2025.10.0-linux-arm64/.noConfigDebugAdapterEndpoints/endpoint-47fcf17876450f51.txt', 'LANG': 'en_US.UTF-8', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:', 'VSCODE_GIT_IPC_HANDLE': '/run/user/1000/vscode-git-6a4e11aee5.sock', 'TERM_PROGRAM': 'vscode', 'AMENT_PREFIX_PATH': '/opt/ros/humble', 'SHELL': '/bin/bash', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'VSCODE_GIT_ASKPASS_EXTRA_ARGS': '', 'PWD': '/home/jy/fmgt/build/fmgt3', 'LC_ALL': 'en_US.UTF-8', 'SSH_CONNECTION': '192.168.0.23 53241 192.168.0.5 22', 'XDG_DATA_DIRS': '/usr/share/gnome:/usr/local/share:/usr/share:/var/lib/snapd/desktop', 'PYTHONPATH': '/home/jy/fmgt/build/fmgt3/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/jy/fmgt/install/fmgt3/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages', 'COLCON': '1'}, 'shell': False}
+[7.798391] (-) TimerEvent: {}
+[7.900014] (-) TimerEvent: {}
+[8.006465] (-) TimerEvent: {}
+[8.107544] (-) TimerEvent: {}
+[8.208565] (-) TimerEvent: {}
+[8.316611] (-) TimerEvent: {}
+[8.417764] (-) TimerEvent: {}
+[8.520024] (-) TimerEvent: {}
+[8.622128] (-) TimerEvent: {}
+[8.724584] (-) TimerEvent: {}
+[8.834372] (-) TimerEvent: {}
+[8.936717] (-) TimerEvent: {}
+[9.038108] (-) TimerEvent: {}
+[9.139547] (-) TimerEvent: {}
+[9.240838] (-) TimerEvent: {}
+[9.342100] (-) TimerEvent: {}
+[9.443420] (-) TimerEvent: {}
+[9.539678] (fmgt1) StdoutLine: {'line': b'running develop\n'}
+[9.543650] (-) TimerEvent: {}
+[9.645056] (-) TimerEvent: {}
+[9.682424] (fmgt4) StdoutLine: {'line': b'running develop\n'}
+[9.746468] (-) TimerEvent: {}
+[9.848380] (-) TimerEvent: {}
+[9.861777] (fmgt3) StdoutLine: {'line': b'running develop\n'}
+[9.926000] (fmgt2) StdoutLine: {'line': b'running develop\n'}
+[9.948554] (-) TimerEvent: {}
+[10.049730] (-) TimerEvent: {}
+[10.151052] (-) TimerEvent: {}
+[10.252396] (-) TimerEvent: {}
+[10.353610] (-) TimerEvent: {}
+[10.454946] (-) TimerEvent: {}
+[10.556120] (-) TimerEvent: {}
+[10.657369] (-) TimerEvent: {}
+[10.758883] (-) TimerEvent: {}
+[10.853042] (fmgt1) StdoutLine: {'line': b'running egg_info\n'}
+[10.856543] (fmgt1) StdoutLine: {'line': b'writing fmgt1.egg-info/PKG-INFO\n'}
+[10.859953] (-) TimerEvent: {}
+[10.860949] (fmgt1) StdoutLine: {'line': b'writing dependency_links to fmgt1.egg-info/dependency_links.txt\n'}
+[10.863502] (fmgt1) StdoutLine: {'line': b'writing entry points to fmgt1.egg-info/entry_points.txt\n'}
+[10.867149] (fmgt1) StdoutLine: {'line': b'writing requirements to fmgt1.egg-info/requires.txt\n'}
+[10.869374] (fmgt1) StdoutLine: {'line': b'writing top-level names to fmgt1.egg-info/top_level.txt\n'}
+[10.871396] (fmgt1) StdoutLine: {'line': b"reading manifest file 'fmgt1.egg-info/SOURCES.txt'\n"}
+[10.874290] (fmgt1) StdoutLine: {'line': b"writing manifest file 'fmgt1.egg-info/SOURCES.txt'\n"}
+[10.879716] (fmgt1) StdoutLine: {'line': b'running build_ext\n'}
+[10.882643] (fmgt1) StdoutLine: {'line': b'Creating /home/jy/fmgt/install/fmgt1/lib/python3.10/site-packages/fmgt1.egg-link (link to .)\n'}
+[10.889245] (fmgt1) StdoutLine: {'line': b'Installing calculator script to /home/jy/fmgt/install/fmgt1/lib/fmgt1\n'}
+[10.891584] (fmgt1) StdoutLine: {'line': b'Installing controller script to /home/jy/fmgt/install/fmgt1/lib/fmgt1\n'}
+[10.903434] (fmgt1) StdoutLine: {'line': b'Installing publisher script to /home/jy/fmgt/install/fmgt1/lib/fmgt1\n'}
+[10.908506] (fmgt1) StdoutLine: {'line': b'\n'}
+[10.912619] (fmgt1) StdoutLine: {'line': b'Installed /home/jy/fmgt/build/fmgt1\n'}
+[10.929629] (fmgt1) StdoutLine: {'line': b'running symlink_data\n'}
+[10.960317] (-) TimerEvent: {}
+[11.062911] (-) TimerEvent: {}
+[11.092442] (fmgt1) CommandEnded: {'returncode': 0}
+[11.164000] (-) TimerEvent: {}
+[11.193498] (fmgt4) StdoutLine: {'line': b'running egg_info\n'}
+[11.199555] (fmgt4) StdoutLine: {'line': b'writing fmgt4.egg-info/PKG-INFO\n'}
+[11.202749] (fmgt4) StdoutLine: {'line': b'writing dependency_links to fmgt4.egg-info/dependency_links.txt\n'}
+[11.205379] (fmgt4) StdoutLine: {'line': b'writing entry points to fmgt4.egg-info/entry_points.txt\n'}
+[11.208123] (fmgt4) StdoutLine: {'line': b'writing requirements to fmgt4.egg-info/requires.txt\n'}
+[11.210808] (fmgt4) StdoutLine: {'line': b'writing top-level names to fmgt4.egg-info/top_level.txt\n'}
+[11.213175] (fmgt4) StdoutLine: {'line': b"reading manifest file 'fmgt4.egg-info/SOURCES.txt'\n"}
+[11.216544] (fmgt4) StdoutLine: {'line': b"writing manifest file 'fmgt4.egg-info/SOURCES.txt'\n"}
+[11.223217] (fmgt4) StdoutLine: {'line': b'running build_ext\n'}
+[11.228157] (fmgt4) StdoutLine: {'line': b'Creating /home/jy/fmgt/install/fmgt4/lib/python3.10/site-packages/fmgt4.egg-link (link to .)\n'}
+[11.234258] (fmgt4) StdoutLine: {'line': b'Installing estimator script to /home/jy/fmgt/install/fmgt4/lib/fmgt4\n'}
+[11.242750] (fmgt4) StdoutLine: {'line': b'Installing follower script to /home/jy/fmgt/install/fmgt4/lib/fmgt4\n'}
+[11.248378] (fmgt4) StdoutLine: {'line': b'Installing publisher script to /home/jy/fmgt/install/fmgt4/lib/fmgt4\n'}
+[11.253256] (fmgt4) StdoutLine: {'line': b'\n'}
+[11.254800] (fmgt4) StdoutLine: {'line': b'Installed /home/jy/fmgt/build/fmgt4\n'}
+[11.256171] (fmgt4) StdoutLine: {'line': b'running symlink_data\n'}
+[11.257505] (fmgt1) JobEnded: {'identifier': 'fmgt1', 'rc': 0}
+[11.265091] (-) TimerEvent: {}
+[11.367386] (-) TimerEvent: {}
+[11.386454] (fmgt3) StdoutLine: {'line': b'running egg_info\n'}
+[11.394107] (fmgt3) StdoutLine: {'line': b'writing fmgt3.egg-info/PKG-INFO\n'}
+[11.406287] (fmgt3) StdoutLine: {'line': b'writing dependency_links to fmgt3.egg-info/dependency_links.txt\n'}
+[11.409989] (fmgt3) StdoutLine: {'line': b'writing entry points to fmgt3.egg-info/entry_points.txt\n'}
+[11.410789] (fmgt3) StdoutLine: {'line': b'writing requirements to fmgt3.egg-info/requires.txt\n'}
+[11.418434] (fmgt3) StdoutLine: {'line': b'writing top-level names to fmgt3.egg-info/top_level.txt\n'}
+[11.430600] (fmgt3) StdoutLine: {'line': b"reading manifest file 'fmgt3.egg-info/SOURCES.txt'\n"}
+[11.446827] (fmgt4) CommandEnded: {'returncode': 0}
+[11.456437] (fmgt3) StdoutLine: {'line': b"writing manifest file 'fmgt3.egg-info/SOURCES.txt'\n"}
+[11.457240] (fmgt3) StdoutLine: {'line': b'running build_ext\n'}
+[11.461905] (fmgt3) StdoutLine: {'line': b'Creating /home/jy/fmgt/install/fmgt3/lib/python3.10/site-packages/fmgt3.egg-link (link to .)\n'}
+[11.465654] (fmgt3) StdoutLine: {'line': b'Installing estimator script to /home/jy/fmgt/install/fmgt3/lib/fmgt3\n'}
+[11.478783] (-) TimerEvent: {}
+[11.481261] (fmgt3) StdoutLine: {'line': b'Installing follower script to /home/jy/fmgt/install/fmgt3/lib/fmgt3\n'}
+[11.494826] (fmgt3) StdoutLine: {'line': b'Installing publisher script to /home/jy/fmgt/install/fmgt3/lib/fmgt3\n'}
+[11.499188] (fmgt3) StdoutLine: {'line': b'\n'}
+[11.502802] (fmgt3) StdoutLine: {'line': b'Installed /home/jy/fmgt/build/fmgt3\n'}
+[11.505581] (fmgt3) StdoutLine: {'line': b'running symlink_data\n'}
+[11.508535] (fmgt2) StdoutLine: {'line': b'running egg_info\n'}
+[11.510538] (fmgt2) StdoutLine: {'line': b'writing fmgt2.egg-info/PKG-INFO\n'}
+[11.518828] (fmgt2) StdoutLine: {'line': b'writing dependency_links to fmgt2.egg-info/dependency_links.txt\n'}
+[11.519520] (fmgt2) StdoutLine: {'line': b'writing entry points to fmgt2.egg-info/entry_points.txt\n'}
+[11.520096] (fmgt2) StdoutLine: {'line': b'writing requirements to fmgt2.egg-info/requires.txt\n'}
+[11.520695] (fmgt2) StdoutLine: {'line': b'writing top-level names to fmgt2.egg-info/top_level.txt\n'}
+[11.537315] (fmgt2) StdoutLine: {'line': b"reading manifest file 'fmgt2.egg-info/SOURCES.txt'\n"}
+[11.546350] (fmgt2) StdoutLine: {'line': b"writing manifest file 'fmgt2.egg-info/SOURCES.txt'\n"}
+[11.550856] (fmgt2) StdoutLine: {'line': b'running build_ext\n'}
+[11.554649] (fmgt2) StdoutLine: {'line': b'Creating /home/jy/fmgt/install/fmgt2/lib/python3.10/site-packages/fmgt2.egg-link (link to .)\n'}
+[11.558947] (fmgt2) StdoutLine: {'line': b'Installing estimator script to /home/jy/fmgt/install/fmgt2/lib/fmgt2\n'}
+[11.562071] (fmgt2) StdoutLine: {'line': b'Installing follower script to /home/jy/fmgt/install/fmgt2/lib/fmgt2\n'}
+[11.564151] (fmgt2) StdoutLine: {'line': b'Installing publisher script to /home/jy/fmgt/install/fmgt2/lib/fmgt2\n'}
+[11.574879] (fmgt2) StdoutLine: {'line': b'\n'}
+[11.579905] (-) TimerEvent: {}
+[11.583630] (fmgt2) StdoutLine: {'line': b'Installed /home/jy/fmgt/build/fmgt2\n'}
+[11.592453] (fmgt2) StdoutLine: {'line': b'running symlink_data\n'}
+[11.672912] (fmgt4) JobEnded: {'identifier': 'fmgt4', 'rc': 0}
+[11.680109] (-) TimerEvent: {}
+[11.718003] (fmgt3) CommandEnded: {'returncode': 0}
+[11.780573] (-) TimerEvent: {}
+[11.808160] (fmgt3) JobEnded: {'identifier': 'fmgt3', 'rc': 0}
+[11.812641] (fmgt2) CommandEnded: {'returncode': 0}
+[11.852645] (fmgt2) JobEnded: {'identifier': 'fmgt2', 'rc': 0}
+[11.856126] (-) EventReactorShutdown: {}
