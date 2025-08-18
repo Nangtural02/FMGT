@@ -1,3 +1,4 @@
+# 파일명: state_estimator_dual_ekf_final.py
 import rclpy, math
 import numpy as np
 from scipy.spatial.transform import Rotation
@@ -32,27 +33,26 @@ class DualEkfStateEstimatorNode(Node):
 
         self.lock = threading.Lock()
 
-        # --- 필터 1: 팔로워 EKF 변수 ---
+        # --- 필터 1: 팔로워 EKF 변수 (변경 없음) ---
         self.x_f = np.zeros(9); self.P_f = np.eye(9) * 0.1; self.P_f[6:9, 6:9] = 0.01**2
         self.Q_f = np.diag([1e-8, 1e-8, 1e-6, 0.05**2, 0.05**2, 0.05**2, 0.01**2, 0.01**2, (math.radians(0.1))**2])
         odom_pos_var = 0.1**2; odom_yaw_var = (math.radians(2.0))**2; odom_omega_var = 0.1**2
         self.R_odom = np.diag([odom_pos_var, odom_pos_var, odom_yaw_var, odom_omega_var])
 
-        # --- 필터 2: 리더 EKF 변수 ---
-        self.x_l = np.zeros(4); self.P_l = np.eye(4) * 1000
+        # ★★★ 변경점: 리더 KF (상태에서 속도 제거) ★★★
+        # 상태: [x, y] (2차원)
+        self.x_l = np.zeros(2)
+        self.P_l = np.eye(2) * 1000
+        # Q_l: 리더 정지 모델의 불확실성 (리더가 얼마나 빨리 움직일 수 있는가)
         leader_process_noise = 0.2**2
-        self.Q_l = np.diag([1e-4, 1e-4, leader_process_noise, leader_process_noise])
-        
-        # ★★★ 작업 1: UWB 값의 공분산 행렬을 키워, 필터가 UWB를 덜 신뢰하도록 함 ★★★
-        uwb_pos_var = 0.4**2  # 위치 표준편차 10cm -> 40cm로 증가
-        uwb_vel_var = 5.0**2  # 속도 표준편차 2.0m/s -> 5.0m/s로 증가
-        self.R_leader_update = np.diag([uwb_pos_var, uwb_pos_var, uwb_vel_var, uwb_vel_var])
+        self.Q_l = np.diag([leader_process_noise, leader_process_noise])
+        uwb_var = 0.3**2
+        self.R_uwb = np.diag([uwb_var, uwb_var])
 
         # --- 시스템 변수 ---
         self.last_imu_timestamp = None; self.is_initialized = False
         self.initial_odom_pos = None; self.initial_odom_yaw = 0.0
         self.last_odom_pose = None; self.last_odom_timestamp = None; self.last_odom_yaw = 0.0
-        self.last_leader_meas_pos = None; self.last_leader_meas_time = None
         
         sensor_qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT, history=HistoryPolicy.KEEP_LAST, depth=1)
@@ -64,7 +64,7 @@ class DualEkfStateEstimatorNode(Node):
         self.odom_sub = self.create_subscription(
             Odometry, '/odom', self.odom_update_callback, sensor_qos_profile)
         
-        self.get_logger().info('Dual EKF State Estimator (Debug Version) 시작됨.')
+        self.get_logger().info('Dual EKF State Estimator (Stable Relative Motion) 시작됨.')
 
     def imu_predict_callback(self, imu_msg):
         with self.lock:
@@ -75,6 +75,9 @@ class DualEkfStateEstimatorNode(Node):
             self.last_imu_timestamp = current_timestamp
             if not (0 < dt < 0.5): return
             
+            # --- 1. 팔로워 EKF 예측 ---
+            x_f_before = self.x_f.copy() # 예측 전 팔로워 상태 저장
+
             q_orientation = np.array([imu_msg.orientation.x, imu_msg.orientation.y, imu_msg.orientation.z, imu_msg.orientation.w])
             accel_original = np.array([imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, imu_msg.linear_acceleration.z])
             omega_original = np.array([imu_msg.angular_velocity.x, imu_msg.angular_velocity.y, imu_msg.angular_velocity.z])
@@ -91,10 +94,26 @@ class DualEkfStateEstimatorNode(Node):
             F_f[3,6]=-cos_th*dt; F_f[3,7]=sin_th*dt; F_f[4,6]=-sin_th*dt; F_f[4,7]=-cos_th*dt; F_f[5,8]=-dt
             self.P_f = F_f @ self.P_f @ F_f.T + self.Q_f * dt
 
-            F_l = np.eye(4); F_l[0,2] = dt; F_l[1,3] = dt
-            self.x_l = F_l @ self.x_l
-            self.P_l = F_l @ self.P_l @ F_l.T + self.Q_l * dt
+            # ★★★ 변경점: 리더 KF 예측 (상대 운동을 올바르게 반영) ★★★
+            if np.any(self.x_l != 0): # 리더가 초기화된 후에만 예측 수행
+                # 1. 팔로워의 움직임 계산
+                delta_theta_f = normalize_angle(self.x_f[2] - x_f_before[2])
+                
+                # 2. 리더의 이전 위치를 '이전' 팔로워 위치 기준으로 변환
+                p_l_relative_before = self.x_l - x_f_before[0:2]
+                
+                # 3. 팔로워의 회전 적용 (올바른 회전 중심 사용)
+                rot_mat = np.array([[math.cos(delta_theta_f), -math.sin(delta_theta_f)],
+                                    [math.sin(delta_theta_f),  math.cos(delta_theta_f)]])
+                p_l_relative_after = rot_mat @ p_l_relative_before
+                
+                # 4. 팔로워의 '이전' 위치에 다시 더하여 새로운 월드 좌표 계산
+                self.x_l = p_l_relative_after + x_f_before[0:2]
+            
+            # 불확실성만 증가 (Random Walk)
+            self.P_l = self.P_l + self.Q_l * dt
 
+            # --- 3. 발행 ---
             header = Header(stamp=imu_msg.header.stamp, frame_id='world')
             f_pos = PointStamped(header=header, point=Point(x=self.x_f[0], y=self.x_f[1], z=0.0))
             l_pos = PointStamped(header=header, point=Point(x=self.x_l[0], y=self.x_l[1], z=0.0))
@@ -158,7 +177,6 @@ class DualEkfStateEstimatorNode(Node):
         with self.lock:
             if not self.is_initialized: return
             
-            current_uwb_timestamp = uwb_msg.header.stamp.sec + uwb_msg.header.stamp.nanosec * 1e-9
             try:
                 d_a, d_b = uwb_msg.point.x, uwb_msg.point.y
                 if not (d_a > 0 and d_b > 0): return
@@ -174,27 +192,19 @@ class DualEkfStateEstimatorNode(Node):
                 z_pos = np.array([z_pos_x, z_pos_y])
             except Exception: return
             
-            if self.last_leader_meas_pos is not None and self.last_leader_meas_time is not None:
-                dt_uwb = current_uwb_timestamp - self.last_leader_meas_time
-                if dt_uwb > 1e-3: z_vel = (z_pos - self.last_leader_meas_pos) / dt_uwb
-                else: z_vel = np.array([0,0])
-            else: z_vel = np.array([0,0])
-            self.last_leader_meas_pos = z_pos
-            self.last_leader_meas_time = current_uwb_timestamp
-            
-            if np.all(self.x_l[0:2] == 0):
-                self.x_l[0:2] = z_pos
+            if np.all(self.x_l == 0):
+                self.x_l = z_pos
                 self.get_logger().info(f"리더 초기 위치 설정 완료: ({self.x_l[0]:.2f}, {self.x_l[1]:.2f})")
 
-            z = np.concatenate([z_pos, z_vel])
+            z = z_pos
             h_x = self.x_l
-            H_l = np.eye(4)
+            H_l = np.eye(2)
             y_err = z - h_x
-            S = H_l @ self.P_l @ H_l.T + self.R_leader_update
+            S = H_l @ self.P_l @ H_l.T + self.R_uwb
             try:
                 K = self.P_l @ H_l.T @ np.linalg.inv(S)
                 self.x_l = self.x_l + K @ y_err
-                self.P_l = (np.eye(4) - K @ H_l) @ self.P_l
+                self.P_l = (np.eye(2) - K @ H_l) @ self.P_l
             except np.linalg.LinAlgError: pass
 
 def main(args=None):
