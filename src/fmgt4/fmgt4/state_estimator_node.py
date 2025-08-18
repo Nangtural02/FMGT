@@ -1,4 +1,3 @@
-# 파일명: state_estimator_dual_ekf_final.py
 import rclpy, math
 import numpy as np
 from scipy.spatial.transform import Rotation
@@ -31,32 +30,29 @@ class DualEkfStateEstimatorNode(Node):
         self.follower_pose_pub = self.create_publisher(PoseStamped, '/follower/estimated_pose', 10)
         self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
 
-        # --- 스레드 안전을 위한 Lock ---
         self.lock = threading.Lock()
 
-        # --- 필터 1: 팔로워 EKF 변수 (자이로 바이어스 추가) ---
-        # 상태: [x, y, theta, vx, vy, omega, b_ax, b_ay, b_wz] (9차원)
-        self.x_f = np.zeros(9)
-        self.P_f = np.eye(9) * 0.1
-        self.P_f[6:9, 6:9] = 0.01**2
+        # --- 필터 1: 팔로워 EKF 변수 ---
+        self.x_f = np.zeros(9); self.P_f = np.eye(9) * 0.1; self.P_f[6:9, 6:9] = 0.01**2
         self.Q_f = np.diag([1e-8, 1e-8, 1e-6, 0.05**2, 0.05**2, 0.05**2, 0.01**2, 0.01**2, (math.radians(0.1))**2])
         odom_pos_var = 0.1**2; odom_yaw_var = (math.radians(2.0))**2; odom_omega_var = 0.1**2
         self.R_odom = np.diag([odom_pos_var, odom_pos_var, odom_yaw_var, odom_omega_var])
 
         # --- 필터 2: 리더 EKF 변수 ---
-        # 상태: [x, y, vx, vy] (4차원)
-        self.x_l = np.zeros(4)
-        self.P_l = np.eye(4) * 1000
+        self.x_l = np.zeros(4); self.P_l = np.eye(4) * 1000
         leader_process_noise = 0.2**2
         self.Q_l = np.diag([1e-4, 1e-4, leader_process_noise, leader_process_noise])
-        uwb_var = 0.2**2 # 팔로워의 불확실성을 암묵적으로 반영하기 위해 약간 크게 설정
-        self.R_uwb = np.diag([uwb_var, uwb_var])
+        
+        # ★★★ 작업 1: UWB 값의 공분산 행렬을 키워, 필터가 UWB를 덜 신뢰하도록 함 ★★★
+        uwb_pos_var = 0.4**2  # 위치 표준편차 10cm -> 40cm로 증가
+        uwb_vel_var = 5.0**2  # 속도 표준편차 2.0m/s -> 5.0m/s로 증가
+        self.R_leader_update = np.diag([uwb_pos_var, uwb_pos_var, uwb_vel_var, uwb_vel_var])
 
         # --- 시스템 변수 ---
-        self.last_imu_timestamp = None
-        self.is_initialized = False
+        self.last_imu_timestamp = None; self.is_initialized = False
         self.initial_odom_pos = None; self.initial_odom_yaw = 0.0
         self.last_odom_pose = None; self.last_odom_timestamp = None; self.last_odom_yaw = 0.0
+        self.last_leader_meas_pos = None; self.last_leader_meas_time = None
         
         sensor_qos_profile = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT, history=HistoryPolicy.KEEP_LAST, depth=1)
@@ -68,7 +64,7 @@ class DualEkfStateEstimatorNode(Node):
         self.odom_sub = self.create_subscription(
             Odometry, '/odom', self.odom_update_callback, sensor_qos_profile)
         
-        self.get_logger().info('Dual EKF State Estimator (Final Architecture) 시작됨.')
+        self.get_logger().info('Dual EKF State Estimator (Debug Version) 시작됨.')
 
     def imu_predict_callback(self, imu_msg):
         with self.lock:
@@ -79,38 +75,26 @@ class DualEkfStateEstimatorNode(Node):
             self.last_imu_timestamp = current_timestamp
             if not (0 < dt < 0.5): return
             
-            # 팔로워 EKF 예측
             q_orientation = np.array([imu_msg.orientation.x, imu_msg.orientation.y, imu_msg.orientation.z, imu_msg.orientation.w])
             accel_original = np.array([imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, imu_msg.linear_acceleration.z])
             omega_original = np.array([imu_msg.angular_velocity.x, imu_msg.angular_velocity.y, imu_msg.angular_velocity.z])
-            imu_rotation = Rotation.from_quat(q_orientation)
-            gravity_in_imu_frame = imu_rotation.inv().apply(GRAVITY)
-            pure_accel = accel_original - gravity_in_imu_frame
+            imu_rotation = Rotation.from_quat(q_orientation); gravity_in_imu_frame = imu_rotation.inv().apply(GRAVITY); pure_accel = accel_original - gravity_in_imu_frame
             ax_body_ros = pure_accel[1]; ay_body_ros = -pure_accel[0]
             b_ax, b_ay, b_wz = self.x_f[6], self.x_f[7], self.x_f[8]
-            ax_local = ax_body_ros - b_ax; ay_local = ay_body_ros - b_ay
-            omega_z_local = omega_original[2] - b_wz
-            theta_f = self.x_f[2]
-            cos_th, sin_th = math.cos(theta_f), math.sin(theta_f)
-            ax_world = ax_local * cos_th - ay_local * sin_th
-            ay_world = ax_local * sin_th + ay_local * cos_th
-            self.x_f[0] += self.x_f[3] * dt; self.x_f[1] += self.x_f[4] * dt
-            self.x_f[2] = normalize_angle(self.x_f[2] + self.x_f[5] * dt)
-            self.x_f[3] += ax_world * dt; self.x_f[4] += ay_world * dt
-            self.x_f[5] = omega_z_local
-            F_f = np.eye(9); F_f[0,3]=dt; F_f[1,4]=dt; F_f[2,5]=dt
-            F_f[3,2] = (-ax_local*sin_th-ay_local*cos_th)*dt; F_f[4,2] = (ax_local*cos_th-ay_local*sin_th)*dt
-            F_f[3,6] = -cos_th*dt; F_f[3,7] = sin_th*dt
-            F_f[4,6] = -sin_th*dt; F_f[4,7] = -cos_th*dt
-            F_f[5,8] = -dt
+            ax_local = ax_body_ros - b_ax; ay_local = ay_body_ros - b_ay; omega_z_local = omega_original[2] - b_wz
+            theta_f = self.x_f[2]; cos_th, sin_th = math.cos(theta_f), math.sin(theta_f)
+            ax_world = ax_local * cos_th - ay_local * sin_th; ay_world = ax_local * sin_th + ay_local * cos_th
+            self.x_f[0]+=self.x_f[3]*dt; self.x_f[1]+=self.x_f[4]*dt; self.x_f[2]=normalize_angle(self.x_f[2]+self.x_f[5]*dt)
+            self.x_f[3]+=ax_world*dt; self.x_f[4]+=ay_world*dt; self.x_f[5]=omega_z_local
+            F_f=np.eye(9); F_f[0,3]=dt; F_f[1,4]=dt; F_f[2,5]=dt
+            F_f[3,2]=(-ax_local*sin_th-ay_local*cos_th)*dt; F_f[4,2]=(ax_local*cos_th-ay_local*sin_th)*dt
+            F_f[3,6]=-cos_th*dt; F_f[3,7]=sin_th*dt; F_f[4,6]=-sin_th*dt; F_f[4,7]=-cos_th*dt; F_f[5,8]=-dt
             self.P_f = F_f @ self.P_f @ F_f.T + self.Q_f * dt
 
-            # 리더 EKF 예측
             F_l = np.eye(4); F_l[0,2] = dt; F_l[1,3] = dt
             self.x_l = F_l @ self.x_l
             self.P_l = F_l @ self.P_l @ F_l.T + self.Q_l * dt
 
-            # --- 발행 ---
             header = Header(stamp=imu_msg.header.stamp, frame_id='world')
             f_pos = PointStamped(header=header, point=Point(x=self.x_f[0], y=self.x_f[1], z=0.0))
             l_pos = PointStamped(header=header, point=Point(x=self.x_l[0], y=self.x_l[1], z=0.0))
@@ -133,6 +117,12 @@ class DualEkfStateEstimatorNode(Node):
                 t.transform.rotation.x=q_tf[0]; t.transform.rotation.y=q_tf[1]; t.transform.rotation.z=q_tf[2]; t.transform.rotation.w=q_tf[3]
                 self.tf_broadcaster.sendTransform(t)
 
+            log_msg = (
+                f"Follower(x,y,th): {self.x_f[0]:.2f}, {self.x_f[1]:.2f}, {math.degrees(self.x_f[2]):.1f} | "
+                f"Leader(x,y): {self.x_l[0]:.2f}, {self.x_l[1]:.2f}"
+            )
+            self.get_logger().info(log_msg, throttle_duration_sec=0.1)
+
     def odom_update_callback(self, odom_msg):
         with self.lock:
             current_odom_timestamp = odom_msg.header.stamp.sec + odom_msg.header.stamp.nanosec * 1e-9
@@ -140,29 +130,22 @@ class DualEkfStateEstimatorNode(Node):
             q_odom = odom_msg.pose.pose.orientation
             odom_yaw = Rotation.from_quat([q_odom.x, q_odom.y, q_odom.z, q_odom.w]).as_euler('zyx', degrees=False)[0]
             odom_pos = np.array([odom_msg.pose.pose.position.x, odom_msg.pose.pose.position.y])
-
             if not self.is_initialized:
                 self.initial_odom_pos = odom_pos; self.initial_odom_yaw = odom_yaw
                 self.last_imu_timestamp = current_odom_timestamp
                 self.last_odom_timestamp = current_odom_timestamp
-                self.last_odom_yaw = odom_yaw
-                self.x_f[0:3] = [0.0, 0.0, 0.0]; self.is_initialized = True
+                self.last_odom_yaw = odom_yaw; self.x_f[0:3] = [0.0, 0.0, 0.0]; self.is_initialized = True
                 self.get_logger().info(f"Follower EKF 초기화 성공! (Odometry 기준)")
                 return
             
             dt_odom = current_odom_timestamp - self.last_odom_timestamp
             if dt_odom < 1e-6: return
             measured_omega = normalize_angle(odom_yaw - self.last_odom_yaw) / dt_odom
-            self.last_odom_timestamp = current_odom_timestamp
-            self.last_odom_yaw = odom_yaw
-
-            relative_pos = odom_pos - self.initial_odom_pos
-            relative_yaw = normalize_angle(odom_yaw - self.initial_odom_yaw)
-            
+            self.last_odom_timestamp = current_odom_timestamp; self.last_odom_yaw = odom_yaw
+            relative_pos = odom_pos - self.initial_odom_pos; relative_yaw = normalize_angle(odom_yaw - self.initial_odom_yaw)
             z = np.array([relative_pos[0], relative_pos[1], relative_yaw, measured_omega])
             h_x = self.x_f[[0, 1, 2, 5]]
             H_f = np.zeros((4, 9)); H_f[0,0]=1.0; H_f[1,1]=1.0; H_f[2,2]=1.0; H_f[3,5]=1.0
-            
             y_err = z - h_x; y_err[2] = normalize_angle(y_err[2])
             S = H_f @ self.P_f @ H_f.T + self.R_odom
             try:
@@ -174,46 +157,45 @@ class DualEkfStateEstimatorNode(Node):
     def uwb_update_callback(self, uwb_msg):
         with self.lock:
             if not self.is_initialized: return
-
-            if np.all(self.x_l[0:2] == 0):
-                try:
-                    d_a, d_b = uwb_msg.point.x, uwb_msg.point.y
-                    if not (d_a > 0 and d_b > 0): return
-                    X_off = ANCHOR_A_LOCAL_POS[0]; Y_off = ANCHOR_A_LOCAL_POS[1]
-                    py_local = (d_b**2 - d_a**2) / (4 * Y_off)
-                    px_sq = d_a**2 - (py_local - Y_off)**2
-                    if px_sq < 0: return
-                    px_local = X_off + math.sqrt(px_sq)
-                    
-                    initial_yaw = self.x_f[2]
-                    cos_th, sin_th = math.cos(initial_yaw), math.sin(initial_yaw)
-                    self.x_l[0] = self.x_f[0] + (px_local * cos_th - py_local * sin_th)
-                    self.x_l[1] = self.x_f[1] + (px_local * sin_th + py_local * cos_th)
-                    self.get_logger().info(f"리더 초기 위치 설정 완료: ({self.x_l[0]:.2f}, {self.x_l[1]:.2f})")
-                except Exception: return
             
-            z = np.array([uwb_msg.point.x, uwb_msg.point.y])
-            pf_x, pf_y, theta_f = self.x_f[0], self.x_f[1], self.x_f[2]
-            pl_x, pl_y = self.x_l[0], self.x_l[1]
-            cos_th, sin_th = math.cos(theta_f), math.sin(theta_f)
-            rot_matrix = np.array([[cos_th, -sin_th], [sin_th, cos_th]])
-            anchor_A_world = np.array([pf_x, pf_y]) + rot_matrix @ ANCHOR_A_LOCAL_POS
-            anchor_B_world = np.array([pf_x, pf_y]) + rot_matrix @ ANCHOR_B_LOCAL_POS
-            d_a_pred = np.linalg.norm(np.array([pl_x, pl_y]) - anchor_A_world)
-            d_b_pred = np.linalg.norm(np.array([pl_x, pl_y]) - anchor_B_world)
+            current_uwb_timestamp = uwb_msg.header.stamp.sec + uwb_msg.header.stamp.nanosec * 1e-9
+            try:
+                d_a, d_b = uwb_msg.point.x, uwb_msg.point.y
+                if not (d_a > 0 and d_b > 0): return
+                pf_x, pf_y, theta_f = self.x_f[0], self.x_f[1], self.x_f[2]
+                X_off = ANCHOR_A_LOCAL_POS[0]; Y_off = ANCHOR_A_LOCAL_POS[1]
+                py_local = (d_b**2 - d_a**2) / (4 * Y_off)
+                px_sq = d_a**2 - (py_local - Y_off)**2
+                if px_sq < 0: return
+                px_local = X_off + math.sqrt(px_sq)
+                cos_th, sin_th = math.cos(theta_f), math.sin(theta_f)
+                z_pos_x = pf_x + (px_local * cos_th - py_local * sin_th)
+                z_pos_y = pf_y + (px_local * sin_th + py_local * cos_th)
+                z_pos = np.array([z_pos_x, z_pos_y])
+            except Exception: return
+            
+            if self.last_leader_meas_pos is not None and self.last_leader_meas_time is not None:
+                dt_uwb = current_uwb_timestamp - self.last_leader_meas_time
+                if dt_uwb > 1e-3: z_vel = (z_pos - self.last_leader_meas_pos) / dt_uwb
+                else: z_vel = np.array([0,0])
+            else: z_vel = np.array([0,0])
+            self.last_leader_meas_pos = z_pos
+            self.last_leader_meas_time = current_uwb_timestamp
+            
+            if np.all(self.x_l[0:2] == 0):
+                self.x_l[0:2] = z_pos
+                self.get_logger().info(f"리더 초기 위치 설정 완료: ({self.x_l[0]:.2f}, {self.x_l[1]:.2f})")
 
-            if d_a_pred > 1e-6 and d_b_pred > 1e-6:
-                h_x = np.array([d_a_pred, d_b_pred])
-                H_l = np.zeros((2, 4))
-                H_l[0,0] = (pl_x-anchor_A_world[0])/d_a_pred; H_l[0,1] = (pl_y-anchor_A_world[1])/d_a_pred
-                H_l[1,0] = (pl_x-anchor_B_world[0])/d_b_pred; H_l[1,1] = (pl_y-anchor_B_world[1])/d_b_pred
-                y_err = z - h_x
-                S = H_l @ self.P_l @ H_l.T + self.R_uwb
-                try:
-                    K = self.P_l @ H_l.T @ np.linalg.inv(S)
-                    self.x_l = self.x_l + K @ y_err
-                    self.P_l = (np.eye(4) - K @ H_l) @ self.P_l
-                except np.linalg.LinAlgError: pass
+            z = np.concatenate([z_pos, z_vel])
+            h_x = self.x_l
+            H_l = np.eye(4)
+            y_err = z - h_x
+            S = H_l @ self.P_l @ H_l.T + self.R_leader_update
+            try:
+                K = self.P_l @ H_l.T @ np.linalg.inv(S)
+                self.x_l = self.x_l + K @ y_err
+                self.P_l = (np.eye(4) - K @ H_l) @ self.P_l
+            except np.linalg.LinAlgError: pass
 
 def main(args=None):
     rclpy.init(args=args)
