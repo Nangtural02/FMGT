@@ -1,4 +1,4 @@
-# 파일명: state_estimator_dual_ekf_final.py
+# 파일명: state_estimator_node.py
 import rclpy, math
 import numpy as np
 from scipy.spatial.transform import Rotation
@@ -82,7 +82,16 @@ class DualEkfStateEstimatorNode(Node):
             accel_original = np.array([imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, imu_msg.linear_acceleration.z])
             omega_original = np.array([imu_msg.angular_velocity.x, imu_msg.angular_velocity.y, imu_msg.angular_velocity.z])
             imu_rotation = Rotation.from_quat(q_orientation); gravity_in_imu_frame = imu_rotation.inv().apply(GRAVITY); pure_accel = accel_original - gravity_in_imu_frame
-            ax_body_ros = pure_accel[1]; ay_body_ros = -pure_accel[0]
+            
+            # <<< 기존 코드 (STELLA N1 기준: Y-forward, X-right)
+            # ax_body_ros = pure_accel[1]; ay_body_ros = -pure_accel[0]
+            # >>>
+            
+            # <<< 수정된 코드 (STELLA N5 기준: X-forward, Y-left)
+            ax_body_ros = pure_accel[0]
+            ay_body_ros = pure_accel[1]
+            # >>>
+
             b_ax, b_ay, b_wz = self.x_f[6], self.x_f[7], self.x_f[8]
             ax_local = ax_body_ros - b_ax; ay_local = ay_body_ros - b_ay; omega_z_local = omega_original[2] - b_wz
             theta_f = self.x_f[2]; cos_th, sin_th = math.cos(theta_f), math.sin(theta_f)

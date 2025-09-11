@@ -8,8 +8,8 @@ from rclpy.node import Node
 from geometry_msgs.msg import Point, PointStamped
 from std_msgs.msg import Header
 
-SERIAL_PORT_A = '/dev/ttyACM1'
-SERIAL_PORT_B = '/dev/ttyACM0'
+SERIAL_PORT_A = '/dev/ttyACM0' #left(blue)
+SERIAL_PORT_B = '/dev/ttyACM1' #right(red)
 BAUD_RATE = 115200
 DATA_REGEX = re.compile(r"distance\[cm\]=(\d+)")
 
