@@ -1,0 +1,4 @@
+### source file only ###
+build/
+install/
+log/
