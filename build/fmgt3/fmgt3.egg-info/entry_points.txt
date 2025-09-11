@@ -1,5 +1,0 @@
-[console_scripts]
-estimator = fmgt3.state_estimator_node:main
-follower = fmgt3.follower_control_node:main
-publisher = fmgt3.uwb_publisher_node:main
-

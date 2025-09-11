@@ -1,5 +1,0 @@
-[console_scripts]
-calculator = fmgt1.position_calculator_node:main
-controller = fmgt1.follower_control_node_stateful:main
-publisher = fmgt1.uwb_publisher_node:main
-

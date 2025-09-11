@@ -1,5 +1,0 @@
-[console_scripts]
-estimator = fmgt2.state_estimator_node:main
-follower = fmgt2.smooth_follower_node:main
-publisher = fmgt2.uwb_publisher_node:main
-
