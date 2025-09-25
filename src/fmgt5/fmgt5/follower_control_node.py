@@ -1,4 +1,3 @@
-# 파일명: follower_control_node.py
 import rclpy
 import numpy as np
 import math
@@ -8,6 +7,8 @@ from geometry_msgs.msg import Twist, PoseStamped
 from nav_msgs.msg import Path
 from scipy.spatial.transform import Rotation
 from visualization_msgs.msg import Marker
+# QoS 관련 클래스 임포트
+from rclpy.qos import QoSProfile, DurabilityPolicy, ReliabilityPolicy, HistoryPolicy
 
 def quaternion_to_yaw(q):
     try: return Rotation.from_quat([q.x,q.y,q.z,q.w]).as_euler('zyx',degrees=False)[0]
@@ -18,9 +19,7 @@ class FollowerControlNode(Node):
     def __init__(self):
         super().__init__('follower_control_node')
         
-        # --- 파라미터 선언 ---
         self.declare_parameter('debug_mode', True)
-        # ★★★ 사용자가 제안한 로직을 위한 핵심 파라미터 ★★★
         self.declare_parameter('skip_distance_threshold', 1.0) 
         self.declare_parameter('max_linear_speed', 2.0)
         self.declare_parameter('max_angular_speed', 0.8)
@@ -32,19 +31,40 @@ class FollowerControlNode(Node):
         self.current_path = []
         self.robot_pose = None
         
-        # --- 발행자 ---
         self.publisher_ = self.create_publisher(Twist, 'cmd_vel', 10)
         self.marker_pub = self.create_publisher(Marker, '/debug/target_point', 10)
         
-        # --- 구독자 ---
-        self.path_sub = self.create_subscription(Path, '/leader/control_trajectory', self.path_callback, 10)
-        self.pose_sub = self.create_subscription(PoseStamped, '/follower/estimated_pose', self.pose_callback, 10)
+        # ★★★★★★★★★★★★★★★★★★★★★
+        # QoS 프로파일 정의: 메시지를 들고 있지 않도록(VOLATILE) 설정
+        qos_profile = QoSProfile(
+            durability=DurabilityPolicy.VOLATILE,
+            reliability=ReliabilityPolicy.RELIABLE,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1
+        )
+        # ★★★★★★★★★★★★★★★★★★★★★
 
-        self.get_logger().info(f'Simple Waypoint Follower (User Logic) 시작됨.')
+        # 구독자 생성 시 QoS 프로파일 적용
+        self.path_sub = self.create_subscription(
+            Path, 
+            '/leader/control_trajectory', 
+            self.path_callback, 
+            qos_profile) # QoS 적용
+            
+        self.pose_sub = self.create_subscription(
+            PoseStamped, 
+            '/follower/estimated_pose', 
+            self.pose_callback, 
+            10) # Pose는 기본 QoS 사용
+
+        self.get_logger().info(f'Simple Waypoint Follower (Stateful / QoS fix) 시작됨.')
 
     def path_callback(self, control_path_msg):
-        self.current_path = control_path_msg.poses
-    
+        if control_path_msg.poses:
+            self.current_path = list(control_path_msg.poses)
+            self.get_logger().info(f'새로운 경로 수신. 총 {len(self.current_path)}개의 웨이포인트.')
+
+    # 나머지 코드는 이전과 동일합니다.
     def pose_callback(self, follower_pose_msg):
         self.robot_pose = follower_pose_msg
         self.control_loop()
@@ -56,37 +76,30 @@ class FollowerControlNode(Node):
         
         robot_pos = np.array([self.robot_pose.pose.position.x, self.robot_pose.pose.position.y])
         robot_yaw = quaternion_to_yaw(self.robot_pose.pose.orientation)
-        
-        # --- 사용자가 제안한 "거리 기반 스킵" 로직 ---
         skip_dist = self.get_parameter('skip_distance_threshold').value
         
-        # 경로의 앞에서부터 웨이포인트를 확인하며, 스킵할 웨이포인트를 제거
-        while len(self.current_path) > 1: # 마지막 웨이포인트는 남겨둠
+        while len(self.current_path) > 1:
             wp_to_check = self.current_path[0]
             wp_pos = np.array([wp_to_check.pose.position.x, wp_to_check.pose.position.y])
             dist_to_wp = np.linalg.norm(robot_pos - wp_pos)
             
             if dist_to_wp < skip_dist:
                 if self.debug_mode:
-                    self.get_logger().warn(f"Waypoint ({wp_pos[0]:.2f}, {wp_pos[1]:.2f}) is too close ({dist_to_wp:.2f}m < {skip_dist:.2f}m). SKIPPING.")
-                self.current_path.pop(0) # 너무 가까우면 경로에서 제거
+                    self.get_logger().warn(f"Waypoint ({wp_pos[0]:.2f}, {wp_pos[1]:.2f}) is too close ({dist_to_wp:.2f}m < {skip_dist:.2f}m). POPPING.")
+                self.current_path.pop(0) 
             else:
-                # 거리가 충분히 먼 첫번째 웨이포인트를 찾으면 루프 중단
                 break
         
-        # 따라갈 목표 웨이포인트는 항상 경로의 첫번째
         target_wp_pose = self.current_path[0]
         target_wp = np.array([target_wp_pose.pose.position.x, target_wp_pose.pose.position.y])
-        
         dist_to_target = np.linalg.norm(robot_pos - target_wp)
 
-        # 최종 목표 도달 확인 (경로에 점이 하나만 남았을 때)
         if len(self.current_path) == 1 and dist_to_target < self.get_parameter('goal_reached_dist').value:
             self.stop_robot()
-            if self.debug_mode: self.get_logger().info("Final waypoint reached. Stopping.")
+            if self.debug_mode: self.get_logger().info("최종 웨이포인트 도달. 정지합니다.")
+            self.current_path.pop(0)
             return
 
-        # --- P 제어 로직 ---
         angle_to_target = math.atan2(target_wp[1] - robot_pos[1], target_wp[0] - robot_pos[0])
         angle_error = normalize_angle(angle_to_target - robot_yaw)
         
@@ -94,13 +107,9 @@ class FollowerControlNode(Node):
         max_linear = self.get_parameter('max_linear_speed').value
         kp_angle = self.get_parameter('kp_angle').value
         kp_pos = self.get_parameter('kp_pos').value
-
         angular_z = np.clip(kp_angle * angle_error, -max_angular, max_angular)
-        
         angle_err_abs = abs(angle_error)
-        # 방향 오차가 90도 이상이면 전진 안함
         speed_reduction = max(0.0, math.cos(angle_err_abs)) if angle_err_abs < math.pi / 2 else 0.0
-        
         linear_x = np.clip(kp_pos * dist_to_target * speed_reduction, 0.0, max_linear)
         
         twist_msg = Twist()
@@ -111,6 +120,7 @@ class FollowerControlNode(Node):
         if self.debug_mode:
             self.publish_marker(target_wp)
             log_msg = (f"[Control] Target WP:({target_wp[0]:.2f},{target_wp[1]:.2f}) | "
+                       f"Path left:{len(self.current_path)} | "
                        f"Dist:{dist_to_target:.2f}m | AngleErr:{math.degrees(angle_error):.1f}deg | "
                        f"Cmd:[{linear_x:.2f}m/s, {angular_z:.2f}rad/s]")
             self.get_logger().info(log_msg, throttle_duration_sec=0.2)
@@ -130,13 +140,8 @@ class FollowerControlNode(Node):
         marker.pose.position.y = target_point[1]
         marker.pose.position.z = 0.1
         marker.pose.orientation.w = 1.0
-        marker.scale.x = 0.25
-        marker.scale.y = 0.25
-        marker.scale.z = 0.25
-        marker.color.a = 0.8
-        marker.color.r = 0.0
-        marker.color.g = 1.0
-        marker.color.b = 0.0 # Green
+        marker.scale.x = 0.25; marker.scale.y = 0.25; marker.scale.z = 0.25
+        marker.color.a = 0.8; marker.color.r = 0.0; marker.color.g = 1.0; marker.color.b = 0.0
         self.marker_pub.publish(marker)
 
     def shutdown_sequence(self):

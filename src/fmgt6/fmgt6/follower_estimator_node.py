@@ -31,7 +31,7 @@ class FollowerEstimatorNode(Node):
         self.x_f = np.zeros(9)
         self.P_f = np.eye(9) * 0.1
         self.Q_f = np.diag([1e-8, 1e-8, 1e-6, 0.05**2, 0.05**2, 0.05**2, 0.01**2, 0.01**2, (math.radians(0.1))**2])
-        odom_pos_var, odom_yaw_var = 0.1**2, (math.radians(2.0))**2
+        odom_pos_var, odom_yaw_var = 0.05**2, (math.radians(0.05))**2
         self.R_odom = np.diag([odom_pos_var, odom_pos_var, odom_yaw_var])
         
         self.is_initialized = False

@@ -22,11 +22,16 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'QANI = fmgt5.qani_publisher_node:main',
-            'CLI = fmgt5.cli_publisher_node:main',
-            'estimator = fmgt5.trajectory_estimator_node:main',
-            'postprocessor = fmgt5.path_postprocessor_node:main',
-            'follower = fmgt5.follower_control_node:main', 
+            'uwb_publisher = fmgt6.uwb_publisher_node:main',
+            'follower_estimator = fmgt6.follower_esitimator_node:main'
+            'leader_estimator = fmgt6.leader_estimator_node:main',
+
+            'point_controller = fmgt6.point_controller_node:main', 
+            'point_postprocessor = fmgt6.point_postprocessor_node:main',
+
+            'path_generator = fmgt6.path_gererator_node:main'
+            'path_postprocessor = fmgt6.path_postprocessor_node:main',
+            'path_controller = fmgt6.path_controller_node:main', 
         ],
     },
 )
