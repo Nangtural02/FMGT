@@ -2,8 +2,6 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 
 def generate_launch_description():
-    controller_node = path_controller_node
-
     uwb_publisher_node = Node(
         package='fmgt6',
         executable='uwb_publisher',
@@ -13,7 +11,6 @@ def generate_launch_description():
             {'firmware_build':'QANI'}
         ]
     )
-
     follower_estimator_node = Node(
         package='fmgt6',
         executable='follower_estimator',
@@ -32,7 +29,6 @@ def generate_launch_description():
 
         ]
     )
-
     path_generator_node = Node(
             package='fmgt6',
             executable='generator',
@@ -51,27 +47,11 @@ def generate_launch_description():
 
         ]
     )
-
     path_controller_node = Node(
         package='fmgt6',
         executable='path_controller',
         name='path_controller_node',
         output='screen',
-        parameters=[
-            {'target_distance': 0.8},
-            {'kp_pos': 0.7},
-            {'kp_vel': 0.5},
-            {'max_linear_speed': 0.22},
-            {'max_angular_speed': 1.0}
-        ]
-    )
-
-    point_controller_node = Node(
-        package='fmgt6',
-        executable='point_controller',
-        name='point_controller_node',
-        output='screen',
-        # 런치 파일에서 직접 파라미터를 설정할 수 있습니다.
         parameters=[
             {'target_distance': 0.8},
             {'kp_pos': 0.7},
@@ -87,5 +67,5 @@ def generate_launch_description():
         leader_estimator_node,
         path_generator_node,
         path_postprocessor_node,
-        controller_node
+        path_controller_node
     ])

@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 import os
 from glob import glob
-package_name = 'fmgt5'
+package_name = 'fmgt6'
 
 setup(
     name=package_name,

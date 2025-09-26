@@ -31,7 +31,7 @@ class PointPostprocessorNode(Node):
         self.declare_parameter('leader_process_variance', 0.2**2)
         self.declare_parameter('leader_measurement_variance', 0.3**2)
         self.declare_parameter('leader_history_size', 10)
-        self.declare_parameter('goal_update_threshold', 0.15)
+        self.declare_parameter('goal_update_threshold', 0.3)
 
         self.goal_point_pub = self.create_publisher(PointStamped, '/controller/goal_point', 10)
         self.lock = threading.Lock()
