@@ -1,6 +1,6 @@
 # 파일명: path_controller_node.py
 """
-Path Controller Node (with Alignment Handling)
+Path Controller Node (with Alignment Handling & Anti-Reverse Logic)
 
 이 노드는 Post-processor가 발행한 최종 목표 경로('/robot/goal_trajectory')를 따라가도록
 로봇의 속도를 제어합니다. 또한 Leader Estimator로부터 Align 필요 신호를 받아,
@@ -8,7 +8,7 @@ Path Controller Node (with Alignment Handling)
 
 - 주요 기능:
   1. Align 신호 수신 및 처리: '/align_needed'가 True이면, 경로 추종을 멈추고 제자리 회전.
-  2. 경로 수신 및 목표 웨이포인트 결정: Align이 필요 없을 때, 경로를 따라갈 목표점을 찾음.
+  2. 경로 겹침 방지: 로봇이 항상 경로의 진행 방향으로만 목표점을 찾도록 하여 역주행을 방지.
   3. 속도 계산 및 발행: 목표점을 향하도록 'cmd_vel'을 계산하여 발행.
 
 - 구독 (Subscriptions):
@@ -94,8 +94,7 @@ class PathControllerNode(Node):
             return
             
         if self.is_align_needed:
-            twist_msg = Twist()
-            twist_msg.angular.z = self.get_parameter('align_angular_speed').value
+            twist_msg = Twist(angular={'z': self.get_parameter('align_angular_speed').value})
             self.cmd_vel_pub.publish(twist_msg)
             return
 
@@ -124,26 +123,55 @@ class PathControllerNode(Node):
             self.publish_target_point(target_point)
 
     def find_target_waypoint(self, robot_pos):
+        """
+        [로직 수정 완료] 경로 겹침 및 역주행을 방지하는 강건한 목표점 탐색 함수.
+        """
+        # 경로를 numpy 배열로 변환
+        path_points = np.array([[pose.pose.position.x, pose.pose.position.y] for pose in self.current_path])
+        
+        # 1단계: 경로 위에서 로봇과 가장 가까운 지점(projection)을 찾고, 그 지점이 속한 선분(segment)의 인덱스를 찾음
+        closest_dist_sq = float('inf')
+        search_start_index = 0
+        
+        for i in range(len(path_points) - 1):
+            p1, p2 = path_points[i], path_points[i+1]
+            segment_vec = p2 - p1
+            # 벡터의 제곱 길이를 계산하여 불필요한 sqrt 연산 방지
+            segment_len_sq = np.dot(segment_vec, segment_vec)
+            
+            if segment_len_sq < 1e-12:
+                # 매우 짧은 선분은 건너뜀
+                dist_sq = np.sum((robot_pos - p1)**2)
+            else:
+                # 로봇 위치를 선분에 투영(projection)
+                t = max(0, min(1, np.dot(robot_pos - p1, segment_vec) / segment_len_sq))
+                projection = p1 + t * segment_vec
+                dist_sq = np.sum((robot_pos - projection)**2)
+
+            if dist_sq < closest_dist_sq:
+                closest_dist_sq = dist_sq
+                # 탐색을 시작할 인덱스는 가장 가까운 선분의 '끝점' 인덱스
+                search_start_index = i + 1
+
+        # 2단계: 위에서 찾은 시작 인덱스부터 경로의 끝까지 순회하며 lookahead_distance를 만족하는 점을 찾음
         lookahead_dist = self.get_parameter('lookahead_distance').value
-        closest_idx, min_dist = -1, float('inf')
-        for i, pose in enumerate(self.current_path):
-            dist = np.linalg.norm(robot_pos - np.array([pose.pose.position.x, pose.pose.position.y]))
-            if dist < min_dist: min_dist, closest_idx = dist, i
-        
-        for i in range(closest_idx, len(self.current_path)):
-            wp_pos = np.array([self.current_path[i].pose.position.x, self.current_path[i].pose.position.y])
+        for i in range(search_start_index, len(path_points)):
+            wp_pos = path_points[i]
             if np.linalg.norm(robot_pos - wp_pos) > lookahead_dist:
-                return wp_pos, (i == len(self.current_path) - 1)
+                return wp_pos, (i == len(path_points) - 1)
         
-        last_pose = self.current_path[-1]
-        return np.array([last_pose.pose.position.x, last_pose.pose.position.y]), True
+        # 경로 끝까지 적절한 점을 못찾으면 마지막 점을 목표로 함
+        return path_points[-1], True
 
     def calculate_control_commands(self, robot_pos, target_point):
         robot_yaw = quaternion_to_yaw(self.robot_pose.pose.orientation)
         angle_to_target = math.atan2(target_point[1] - robot_pos[1], target_point[0] - robot_pos[0])
         angle_error = normalize_angle(angle_to_target - robot_yaw)
         
-        kp_angle, max_angular, max_linear = self.get_parameter('kp_angle').value, self.get_parameter('max_angular_speed').value, self.get_parameter('max_linear_speed').value
+        kp_angle = self.get_parameter('kp_angle').value
+        max_angular = self.get_parameter('max_angular_speed').value
+        max_linear = self.get_parameter('max_linear_speed').value
+        
         angular_z = np.clip(kp_angle * angle_error, -max_angular, max_angular)
         
         angle_err_abs = abs(angle_error)
@@ -171,8 +199,10 @@ class PathControllerNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = PathControllerNode()
-    try: rclpy.spin(node)
-    except KeyboardInterrupt: pass
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
     finally:
         node.get_logger().info('노드 종료. 로봇 정지.')
         node.stop_robot()

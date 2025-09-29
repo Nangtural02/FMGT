@@ -44,7 +44,7 @@ class PathGeneratorNode(Node):
         self.declare_parameter('path_update_period_sec', 1.0)
         self.declare_parameter('min_points_for_path', 10)
         self.declare_parameter('history_length', 200)
-        self.declare_parameter('kf_transition_covariance', 0.05)
+        self.declare_parameter('kf_transition_covariance', 0.03*2)
         self.declare_parameter('kf_observation_covariance', 0.5)
 
         # --- 발행자 ---
