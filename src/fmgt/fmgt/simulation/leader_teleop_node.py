@@ -22,10 +22,10 @@ msg = """
    a    s    d
    z    x    c
 
-w/s : 전/후진 (+/- X축)
+w/x : 전/후진 (+/- X축)
 a/d : 좌/우 이동 (+/- Y축)
 q/e/z/c : 대각선 이동
-x 또는 다른 키 : 정지
+s 또는 다른 키 : 정지
 
 CTRL-C를 눌러 종료합니다.
 """
@@ -65,7 +65,7 @@ class LeaderTeleopNode(Node):
         # ROS 좌표계 기준 (전방: +X, 좌측: +Y)
         if self.key == 'w':
             twist.linear.x = LEADER_SPEED
-        elif self.key == 's':
+        elif self.key == 'x':
             twist.linear.x = -LEADER_SPEED
         elif self.key == 'a':
             twist.linear.y = LEADER_SPEED
@@ -87,7 +87,7 @@ class LeaderTeleopNode(Node):
             twist.linear.y = -diag_speed
 
         # 'x' 키를 명시적인 정지 키로 추가
-        elif self.key == 'x':
+        elif self.key == 's':
             pass # 모든 속도가 0.0인 Twist 메시지가 발행됨
 
         elif self.key == '\x03': # CTRL-C
