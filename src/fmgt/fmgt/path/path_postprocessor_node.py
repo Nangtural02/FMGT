@@ -41,7 +41,7 @@ class PathPostprocessorNode(Node):
     def __init__(self):
         super().__init__('path_postprocessor_node')
 
-        self.declare_parameter('douglas_peucker_epsilon', 0.1)
+        self.declare_parameter('douglas_peucker_epsilon', 0.3)
         self.declare_parameter('waypoint_spacing', 0.05)
         self.declare_parameter('target_distance', 1.0)
         self.declare_parameter('yaw_smoothing_window_size', 5)
