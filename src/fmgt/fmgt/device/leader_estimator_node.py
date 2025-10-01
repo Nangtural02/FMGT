@@ -81,11 +81,7 @@ class LeaderEstimatorNode(Node):
         self.Q = np.eye(2) * q_val
         r_val = self.get_parameter('ekf_measurement_noise').value
         self.R = np.eye(2) * r_val
-        self.is_initialized = False
-        
-        uncertainty_hist_size = self.get_parameter('uncertainty_history_size').value
-        self.uncertainty_history = deque(maxlen=uncertainty_hist_size)
-        
+        self.is_initialized = False        
         self.is_align_mode = False
         self.align_buffer = []
 
