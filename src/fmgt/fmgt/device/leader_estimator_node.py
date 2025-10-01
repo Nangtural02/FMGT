@@ -19,6 +19,7 @@ UWB 거리 측정치의 비선형성을 확장 칼만 필터(EKF)를 통해 효�
      예측 상태와 더 가까운 해를 기준으로 필터를 업데이트하여 물리적으로 더 타당한
      위치를 강건하게 추정합니다.
 
+
 - 구독 (Subscriptions):
   - /follower/estimated_pose (geometry_msgs/PoseStamped): 팔로워 로봇의 추정된 위치 및 자세.
      EKF의 자코비안 및 측정 함수 계산에 사용됩니다.
@@ -26,6 +27,7 @@ UWB 거리 측정치의 비선형성을 확장 칼만 필터(EKF)를 통해 효�
      메시지의 point.x 필드에 d_a(좌측), point.y 필드에 d_b(우측) 값이 담겨 있습니다.
 
 - 발행 (Publications):
+
   - /leader/raw_point (geometry_msgs/PointStamped): EKF를 통해 최종적으로 필터링된
      리더의 위치 추정치를 발행합니다. (타 노드와의 호환성을 위해 토픽명은 유지합니다.)
 
@@ -39,6 +41,7 @@ UWB 거리 측정치의 비선형성을 확장 칼만 필터(EKF)를 통해 효�
   - ekf_measurement_noise (double): EKF의 측정 노이즈(R) 값입니다. UWB 거리 측정 자체의
      불확실성을 나타내며, 값이 클수록 UWB 측정치를 덜 신뢰하고 필터의 기존 예측값을
      더 많이 신뢰하게 됩니다.
+
 """
 import rclpy
 import numpy as np
@@ -47,20 +50,24 @@ import threading
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 from geometry_msgs.msg import PointStamped, PoseStamped
+from std_msgs.msg import Bool
 from scipy.spatial.transform import Rotation
+
 
 class LeaderEstimatorNode(Node):
     def __init__(self):
         super().__init__('leader_estimator_node')
         
-        # --- 파라미터 선언 ---
+        # --- 파라미터 선언 (새로운 불확실성 지표에 맞게 수정) ---
         self.declare_parameter('anchor_forward_offset', 0.25)
         self.declare_parameter('anchor_width', 0.4)
         self.declare_parameter('ekf_process_noise', 0.3)
         self.declare_parameter('ekf_measurement_noise', 0.3*2)
 
+
         # --- 발행자 ---
         self.raw_point_pub = self.create_publisher(PointStamped, '/leader/raw_point', 10)
+        self.align_needed_pub = self.create_publisher(Bool, '/align_needed', 10)
         
         # --- 내부 상태 변수 ---
         self.lock = threading.Lock()
@@ -76,12 +83,15 @@ class LeaderEstimatorNode(Node):
         self.R = np.eye(2) * r_val
         self.is_initialized = False
         
+        uncertainty_hist_size = self.get_parameter('uncertainty_history_size').value
+        self.uncertainty_history = deque(maxlen=uncertainty_hist_size)
+        
+        self.is_align_mode = False
+        self.align_buffer = []
+
         # --- 구독자 ---
-        self.follower_pose_sub = self.create_subscription(
-            PoseStamped, '/follower/estimated_pose', self.follower_pose_callback, 10)
-        self.uwb_sub = self.create_subscription(
-            PointStamped, 'raw_uwb_distances', self.uwb_update_callback, 
-            QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, history=HistoryPolicy.KEEP_LAST, depth=1))
+        self.follower_pose_sub = self.create_subscription(PoseStamped, '/follower/estimated_pose', self.follower_pose_callback, 10)
+        self.uwb_sub = self.create_subscription(PointStamped, 'raw_uwb_distances', self.uwb_update_callback, QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, history=HistoryPolicy.KEEP_LAST, depth=1))
             
         self.get_logger().info("Leader Estimator (EKF-based) 시작됨.")
 
@@ -215,15 +225,10 @@ class LeaderEstimatorNode(Node):
         return hx, H
 
 def main(args=None):
-    rclpy.init(args=args)
-    node = LeaderEstimatorNode()
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        node.destroy_node()
-        rclpy.try_shutdown()
+    rclpy.init(args=args); node = LeaderEstimatorNode()
+    try: rclpy.spin(node)
+    except KeyboardInterrupt: pass
+    finally: node.destroy_node(); rclpy.try_shutdown()
 
 if __name__ == '__main__':
     main()

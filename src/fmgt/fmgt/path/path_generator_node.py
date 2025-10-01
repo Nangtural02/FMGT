@@ -40,7 +40,7 @@ class PathGeneratorNode(Node):
         # 칼만 스무더 관련 파라미터는 더 이상 사용되지 않음
         self.declare_parameter('path_update_period_sec', 1.0)
         self.declare_parameter('min_points_for_path', 10)
-        self.declare_parameter('history_length', 1000)
+        self.declare_parameter('history_length', 1000
 
         # --- 발행자 ---
         self.full_trajectory_pub = self.create_publisher(Path, '/leader/full_trajectory', 10)
