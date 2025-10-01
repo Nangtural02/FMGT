@@ -1,7 +1,7 @@
 # 파일명: follower_estimator_node.py
 # 경로: fmgt/estimation/follower_estimator_node.py
 """
-Follower Estimator Node (최종 버전)
+Follower Estimator Node (수치적 안정성 강화 버전)
 
 이 노드는 로봇(팔로워)의 위치와 자세를 추정하는 역할을 합니다.
 IMU와 Odometry 센서 데이터를 확장 칼만 필터(EKF)에 융합하여,
@@ -12,6 +12,11 @@ IMU와 Odometry 센서 데이터를 확장 칼만 필터(EKF)에 융합하여,
   2. Odometry(위치, 방향)를 사용한 EKF 보정(Update) 단계 수행
   3. EKF의 'world' 좌표계를 항상 (0,0,0)에서 시작하도록 하여 디버깅 편의성 확보
   4. RDP 알고리즘으로 최적화된 로봇의 이동 경로를 주기적으로 발행하여 시각적 디버깅 지원
+
+- 안정성 강화 조치:
+  1. [Joseph Form Covariance Update]: 수치적으로 더 안정적인 Joseph 형태의 공분산 업데이트 공식을 적용.
+  2. [Symmetry Enforcement]: 매 업데이트 후 공분산 행렬의 대칭성을 강제로 유지하여 오차 누적을 방지.
+  3. [Validity Check]: 상태 벡터에 NaN/Inf 값이 발생하는지 검사하여 필터의 발산을 조기에 감지.
 
 - 구독 (Subscriptions):
   - /imu/data (sensor_msgs/Imu): EKF의 예측 단계에 사용됩니다.
@@ -155,6 +160,9 @@ class FollowerEstimatorNode(Node):
             
             self.P_f = F_f @ self.P_f @ F_f.T + self.Q_f * dt
 
+            # [안정성 강화 1] 예측 후 공분산 행렬의 대칭성을 강제로 유지
+            self.P_f = (self.P_f + self.P_f.T) / 2.0
+
             # 예측된 위치 발행
             f_pose = PoseStamped()
             f_pose.header = imu_msg.header
@@ -229,7 +237,18 @@ class FollowerEstimatorNode(Node):
             
             self.x_f += K @ y_err
             self.x_f[2] = normalize_angle(self.x_f[2])
-            self.P_f = (np.eye(9) - K @ H_f) @ self.P_f
+            
+            # [안정성 강화 2] Joseph 형태의 공분산 업데이트 공식 사용
+            I = np.eye(9)
+            # self.P_f = (I - K @ H_f) @ self.P_f # 기존 공식
+            self.P_f = (I - K @ H_f) @ self.P_f @ (I - K @ H_f).T + K @ self.R_odom @ K.T
+            
+            # [안정성 강화 3] 상태 벡터에 NaN/Inf가 있는지 검사
+            if not np.all(np.isfinite(self.x_f)):
+                self.get_logger().error("EKF 상태 벡터가 발산했습니다 (NaN or Inf). 노드를 재시작해야 합니다.")
+                # 비상 정지 또는 필터 리셋 로직을 여기에 추가할 수 있습니다.
+                # 예를 들어, rclpy.shutdown()을 호출하여 안전하게 종료
+                return
 
     def publish_estimated_path(self):
         """주기적으로 추정된 경로(Path)를 RDP 알고리즘으로 단순화하여 발행합니다."""
@@ -262,6 +281,10 @@ class FollowerEstimatorNode(Node):
         dmax, index = 0.0, 0
         p1, p_end = np.array(points[0]), np.array(points[-1])
         
+        # 시작점과 끝점이 같은 경우, 한 점만 반환 (분모 0 방지)
+        if np.allclose(p1, p_end):
+            return [points[0]]
+
         # 시작점과 끝점을 잇는 직선과의 거리가 가장 먼 점을 찾음
         for i in range(1, len(points) - 1):
             d = np.linalg.norm(np.cross(p_end - p1, p1 - np.array(points[i]))) / np.linalg.norm(p_end - p1)
