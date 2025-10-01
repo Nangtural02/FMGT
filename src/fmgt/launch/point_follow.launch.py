@@ -19,18 +19,27 @@ def generate_launch_description():
         executable='follower_estimator',
         name='follower_estimator_node',
         output='screen',
+        parameters=[
+
+        ]
     )
     leader_estimator_node = Node(
         package='fmgt',
         executable='leader_estimator',
         name='leader_estimator_node',
         output='screen',
+        pareameters=[
+
+        ]
     )
     point_postprocessor_node = Node(
         package= 'fmgt',
         executable='point_postprocessor',
         name='point_postprocessor_node',
         output='screen',
+        parameters=[
+
+        ]
     )
 
     point_controller_node = Node(
@@ -38,13 +47,9 @@ def generate_launch_description():
         executable='point_controller',
         name='point_controller_node',
         output='screen',
-    )
-    path_generator_node = Node( # 디버깅용 패스 생성
-        package='fmgt',
-        executable='path_generator',
-        name='path_generator_node',
-        output='screen',
-        # parameters=[            ]
+        parameters=[
+
+        ]
     )
     # LaunchDescription 객체에 실행할 노드들을 리스트로 담아 반환
     return LaunchDescription([
@@ -52,6 +57,5 @@ def generate_launch_description():
         follower_estimator_node,
         leader_estimator_node,
         point_postprocessor_node,
-        path_generator_node,
         point_controller_node
     ])

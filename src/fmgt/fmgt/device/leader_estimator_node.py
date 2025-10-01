@@ -50,8 +50,12 @@ class LeaderEstimatorNode(Node):
         # --- 파라미터 선언 (새로운 불확실성 지표에 맞게 수정) ---
         self.declare_parameter('anchor_forward_offset', 0.25)
         self.declare_parameter('anchor_width', 0.4)
-        self.declare_parameter('ekf_process_noise', 0.6**2)
-        self.declare_parameter('ekf_measurement_noise', 0.3**2)
+        self.declare_parameter('history_size_for_solution', 10)
+        self.declare_parameter('ma_window_size', 5)
+        self.declare_parameter('uncertainty_history_size', 10)
+        self.declare_parameter('align_entry_threshold', 0.9)  # 값이 1.0에 가까울수록 불확실
+        self.declare_parameter('align_exit_threshold', 0.6)   # 값이 0.0에 가까울수록 확실
+
         # --- 발행자 ---
         self.raw_point_pub = self.create_publisher(PointStamped, '/leader/raw_point', 10)
         self.align_needed_pub = self.create_publisher(Bool, '/align_needed', 10)
