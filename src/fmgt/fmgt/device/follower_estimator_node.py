@@ -1,22 +1,25 @@
 # 파일명: follower_estimator_node.py
 # 경로: fmgt/estimation/follower_estimator_node.py
 """
-Follower Estimator Node (수치적 안정성 강화 버전)
+Follower Estimator Node (최종 안정화 버전)
 
 이 노드는 로봇(팔로워)의 위치와 자세를 추정하는 역할을 합니다.
 IMU와 Odometry 센서 데이터를 확장 칼만 필터(EKF)에 융합하여,
 월드 좌표계(`world`)에서의 로봇 위치를 안정적으로 계산합니다.
 
 - 주요 기능:
-  1. IMU(가속도, 각속도)를 사용한 EKF 예측(Predict) 단계 수행
-  2. Odometry(위치, 방향)를 사용한 EKF 보정(Update) 단계 수행
-  3. EKF의 'world' 좌표계를 항상 (0,0,0)에서 시작하도록 하여 디버깅 편의성 확보
-  4. RDP 알고리즘으로 최적화된 로봇의 이동 경로를 주기적으로 발행하여 시각적 디버깅 지원
+  1. IMU(가속도, 각속도)를 사용한 EKF 예측(Predict) 단계 수행.
+  2. Odometry(위치, 방향)를 사용한 EKF 보정(Update) 단계 수행.
+  3. EKF의 'world' 좌표계를 항상 (0,0,0)에서 시작하도록 하여 디버깅 편의성 확보.
+  4. RDP 알고리즘으로 최적화된 로봇의 이동 경로를 주기적으로 발행하여 시각적 디버깅 지원.
 
 - 안정성 강화 조치:
-  1. [Joseph Form Covariance Update]: 수치적으로 더 안정적인 Joseph 형태의 공분산 업데이트 공식을 적용.
-  2. [Symmetry Enforcement]: 매 업데이트 후 공분산 행렬의 대칭성을 강제로 유지하여 오차 누적을 방지.
-  3. [Validity Check]: 상태 벡터에 NaN/Inf 값이 발생하는지 검사하여 필터의 발산을 조기에 감지.
+  1. [성능 최적화]: IMU 콜백에서 경로 기록 로직을 분리. 별도의 저주기 타이머(0.2초)를
+     사용하여 경로를 기록함으로써, 고주파 IMU 콜백의 성능 저하를 원천적으로 방지.
+  2. [Joseph Form Covariance Update]: 수치적으로 더 안정적인 Joseph 형태의 공분산 업데이트 공식을 적용.
+  3. [Symmetry Enforcement]: 매 업데이트 후 공분산 행렬의 대칭성을 강제로 유지하여 오차 누적을 방지.
+  4. [Validity Check]: 상태 벡터에 NaN/Inf 값이 발생하는지 검사하여 필터의 발산을 조기에 감지.
+  5. [ZeroDivisionError Guard]: RDP 알고리즘에서 경로의 시작점과 끝점이 같을 때 발생하는 오류를 방지.
 
 - 구독 (Subscriptions):
   - /imu/data (sensor_msgs/Imu): EKF의 예측 단계에 사용됩니다.
@@ -29,6 +32,8 @@ IMU와 Odometry 센서 데이터를 확장 칼만 필터(EKF)에 융합하여,
 
 - 파라미터 (Parameters):
   - path_publish_period_sec (double): 디버깅 경로를 발행하는 주기 (초).
+  - path_logging_period_sec (double): 디버깅 경로를 히스토리에 기록하는 주기 (초).
+  - path_history_max_length (int): 디버깅 경로 히스토리의 최대 길이.
   - rdp_epsilon (double): 경로 단순화(RDP)를 위한 임계값 (미터).
 """
 import rclpy
@@ -37,11 +42,12 @@ import math
 import threading
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
+from collections import deque
 
 from geometry_msgs.msg import PoseStamped, Quaternion, TransformStamped
 from sensor_msgs.msg import Imu
 from nav_msgs.msg import Odometry
-from nav_msgs.msg import Path # 경로 메시지를 위해 추가
+from nav_msgs.msg import Path
 import tf2_ros
 
 from scipy.spatial.transform import Rotation
@@ -63,21 +69,21 @@ class FollowerEstimatorNode(Node):
     def __init__(self):
         super().__init__('follower_estimator_node')
 
-        # 디버깅 경로 발행을 위한 파라미터 선언
+        # 파라미터 선언
         self.declare_parameter('path_publish_period_sec', 1.0)
+        self.declare_parameter('path_logging_period_sec', 0.2)
+        self.declare_parameter('path_history_max_length', 1000)
         self.declare_parameter('rdp_epsilon', 0.05)
         
         # 발행자 및 TF 브로드캐스터 초기화
         self.follower_pose_pub = self.create_publisher(PoseStamped, '/follower/estimated_pose', 10)
-        self.path_pub = self.create_publisher(Path, '/debug/follower_estimated_path', 10) # 경로 발행자 추가
+        self.path_pub = self.create_publisher(Path, '/debug/follower_estimated_path', 10)
         self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
         self.lock = threading.Lock()
 
-        # EKF 상태 변수 (9x1): [x, y, theta, vx, vy, v_theta, b_ax, b_ay, b_wz]
+        # EKF 상태 변수
         self.x_f = np.zeros(9)
         self.P_f = np.eye(9) * 0.1
-
-        # 프로세스 및 측정 노이즈 공분산 행렬
         self.Q_f = np.diag([
             1e-8, 1e-8, 1e-6,
             0.05**2, 0.05**2, 0.05**2,
@@ -94,8 +100,9 @@ class FollowerEstimatorNode(Node):
         self.initial_odom_pos = None
         self.initial_odom_yaw = 0.0
 
-        # 디버깅 경로 저장을 위한 리스트
-        self.estimated_path_history = []
+        # 경로 히스토리를 deque로 관리
+        max_len = self.get_parameter('path_history_max_length').value
+        self.estimated_path_history = deque(maxlen=max_len)
 
         # 구독자 초기화
         sensor_qos = QoSProfile(
@@ -106,29 +113,38 @@ class FollowerEstimatorNode(Node):
         self.imu_sub = self.create_subscription(Imu, '/imu/data', self.imu_predict_callback, sensor_qos)
         self.odom_sub = self.create_subscription(Odometry, '/odom', self.odom_update_callback, sensor_qos)
         
-        # 경로 발행을 위한 주기적인 타이머 생성
+        # 타이머 초기화
         path_pub_period = self.get_parameter('path_publish_period_sec').value
-        self.path_timer = self.create_timer(path_pub_period, self.publish_estimated_path)
+        self.path_publish_timer = self.create_timer(path_pub_period, self.publish_estimated_path)
         
-        self.get_logger().info("Follower Estimator Node 시작됨.")
+        path_log_period = self.get_parameter('path_logging_period_sec').value
+        self.path_log_timer = self.create_timer(path_log_period, self.log_path_callback)
+        
+        self.get_logger().info(f"Follower Estimator Node 시작됨. Path history max length: {max_len}")
         
     def imu_predict_callback(self, imu_msg):
-        """IMU 데이터를 사용하여 EKF의 예측(predict) 단계를 수행합니다."""
         with self.lock:
             if not self.is_initialized:
                 return
             
-            # 시간 간격(dt) 계산
             current_timestamp = rclpy.time.Time.from_msg(imu_msg.header.stamp).nanoseconds / 1e9
             if self.last_imu_timestamp is None:
                 self.last_imu_timestamp = current_timestamp
                 return
+            
             dt = current_timestamp - self.last_imu_timestamp
-            self.last_imu_timestamp = current_timestamp
+            
             if not (0 < dt < 0.5):
+                self.get_logger().warn(
+                    f"비정상적인 IMU dt 값 감지: {dt:.4f} 초. "
+                    f"Current: {current_timestamp:.4f}, Last: {self.last_imu_timestamp:.4f}. "
+                    "예측 단계를 건너뜁니다."
+                )
+                self.last_imu_timestamp = current_timestamp
                 return
             
-            # IMU 데이터 처리 및 상태 예측
+            self.last_imu_timestamp = current_timestamp
+            
             q_orientation = np.array([imu_msg.orientation.x, imu_msg.orientation.y, imu_msg.orientation.z, imu_msg.orientation.w])
             accel_original = np.array([imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, imu_msg.linear_acceleration.z])
             
@@ -150,7 +166,6 @@ class FollowerEstimatorNode(Node):
             self.x_f[3] += ax_world * dt
             self.x_f[4] += ay_world * dt
             
-            # 상태 전이 행렬 계산 및 공분산 예측
             F_f = np.eye(9)
             F_f[0, 3] = dt; F_f[1, 4] = dt; F_f[2, 5] = dt
             F_f[3, 2] = (-ax_local * sin_th - ay_local * cos_th) * dt
@@ -159,11 +174,8 @@ class FollowerEstimatorNode(Node):
             F_f[4, 6] = -sin_th * dt; F_f[4, 7] = -cos_th * dt
             
             self.P_f = F_f @ self.P_f @ F_f.T + self.Q_f * dt
-
-            # [안정성 강화 1] 예측 후 공분산 행렬의 대칭성을 강제로 유지
             self.P_f = (self.P_f + self.P_f.T) / 2.0
 
-            # 예측된 위치 발행
             f_pose = PoseStamped()
             f_pose.header = imu_msg.header
             f_pose.header.frame_id = 'world'
@@ -173,10 +185,6 @@ class FollowerEstimatorNode(Node):
             f_pose.pose.orientation = yaw_to_quaternion(self.x_f[2])
             self.follower_pose_pub.publish(f_pose)
 
-            # 디버깅을 위해 추정된 경로 기록
-            self.estimated_path_history.append([self.x_f[0], self.x_f[1]])
-
-            # world -> odom TF 발행
             if self.last_odom_pose:
                 T_world_base = np.eye(4)
                 T_world_base[:3, :3] = Rotation.from_euler('z', self.x_f[2]).as_matrix()
@@ -199,7 +207,6 @@ class FollowerEstimatorNode(Node):
                 self.tf_broadcaster.sendTransform(t)
 
     def odom_update_callback(self, odom_msg):
-        """Odometry 데이터를 사용하여 EKF의 보정(update) 단계를 수행합니다."""
         with self.lock:
             self.last_odom_pose = odom_msg.pose.pose
             
@@ -208,15 +215,12 @@ class FollowerEstimatorNode(Node):
             current_odom_pos = np.array([odom_msg.pose.pose.position.x, odom_msg.pose.pose.position.y])
 
             if not self.is_initialized:
-                # 첫 Odometry 메시지를 '기준점'으로 저장하고 EKF는 (0,0)에서 시작
                 self.initial_odom_pos = current_odom_pos
                 self.initial_odom_yaw = current_odom_yaw
                 self.is_initialized = True
-                
                 self.get_logger().info(f"Follower EKF 초기화. Odom 기준점 설정: pos=({self.initial_odom_pos[0]:.2f}, {self.initial_odom_pos[1]:.2f}), yaw={math.degrees(self.initial_odom_yaw):.2f} deg. EKF는 (0,0)에서 시작.")
                 return
             
-            # 현재 Odometry 값을 '기준점'에 대한 상대 변위로 변환하여 측정값(z) 생성
             delta_pos_world = current_odom_pos - self.initial_odom_pos
             cos_init = math.cos(-self.initial_odom_yaw)
             sin_init = math.sin(-self.initial_odom_yaw)
@@ -238,26 +242,32 @@ class FollowerEstimatorNode(Node):
             self.x_f += K @ y_err
             self.x_f[2] = normalize_angle(self.x_f[2])
             
-            # [안정성 강화 2] Joseph 형태의 공분산 업데이트 공식 사용
             I = np.eye(9)
-            # self.P_f = (I - K @ H_f) @ self.P_f # 기존 공식
             self.P_f = (I - K @ H_f) @ self.P_f @ (I - K @ H_f).T + K @ self.R_odom @ K.T
             
-            # [안정성 강화 3] 상태 벡터에 NaN/Inf가 있는지 검사
             if not np.all(np.isfinite(self.x_f)):
                 self.get_logger().error("EKF 상태 벡터가 발산했습니다 (NaN or Inf). 노드를 재시작해야 합니다.")
-                # 비상 정지 또는 필터 리셋 로직을 여기에 추가할 수 있습니다.
-                # 예를 들어, rclpy.shutdown()을 호출하여 안전하게 종료
                 return
+
+    def log_path_callback(self):
+        """주기적으로 호출되어 EKF의 현재 위치를 경로 히스토리에 기록합니다."""
+        with self.lock:
+            if not self.is_initialized:
+                return
+            
+            # 현재 추정된 위치를 경로 히스토리에 추가
+            current_position = (self.x_f[0], self.x_f[1])
+            self.estimated_path_history.append(current_position)
 
     def publish_estimated_path(self):
         """주기적으로 추정된 경로(Path)를 RDP 알고리즘으로 단순화하여 발행합니다."""
         with self.lock:
             if len(self.estimated_path_history) < 2:
                 return
-
+            
+            path_points = list(self.estimated_path_history)
             epsilon = self.get_parameter('rdp_epsilon').value
-            simplified_points = self._douglas_peucker(self.estimated_path_history, epsilon)
+            simplified_points = self._douglas_peucker(path_points, epsilon)
             
             path_msg = Path()
             path_msg.header.stamp = self.get_clock().now().to_msg()
@@ -268,7 +278,7 @@ class FollowerEstimatorNode(Node):
                 pose.header = path_msg.header
                 pose.pose.position.x = point[0]
                 pose.pose.position.y = point[1]
-                pose.pose.orientation.w = 1.0 # 기본 방향
+                pose.pose.orientation.w = 1.0
                 path_msg.poses.append(pose)
             
             self.path_pub.publish(path_msg)
@@ -281,17 +291,18 @@ class FollowerEstimatorNode(Node):
         dmax, index = 0.0, 0
         p1, p_end = np.array(points[0]), np.array(points[-1])
         
-        # 시작점과 끝점이 같은 경우, 한 점만 반환 (분모 0 방지)
-        if np.allclose(p1, p_end):
+        if np.linalg.norm(p_end - p1) < 1e-6:
             return [points[0]]
 
-        # 시작점과 끝점을 잇는 직선과의 거리가 가장 먼 점을 찾음
         for i in range(1, len(points) - 1):
-            d = np.linalg.norm(np.cross(p_end - p1, p1 - np.array(points[i]))) / np.linalg.norm(p_end - p1)
+            # 분모가 0이 되는 것을 방지하기 위해 np.linalg.norm(p_end - p1)을 미리 계산
+            denominator = np.linalg.norm(p_end - p1)
+            if denominator < 1e-9: # 매우 작은 값일 경우 건너뛰기
+                continue
+            d = np.linalg.norm(np.cross(p_end - p1, p1 - np.array(points[i]))) / denominator
             if d > dmax:
                 index, dmax = i, d
         
-        # 가장 먼 거리가 임계값(epsilon)보다 크면 재귀적으로 단순화 수행
         if dmax > epsilon:
             rec1 = self._douglas_peucker(points[:index + 1], epsilon)
             rec2 = self._douglas_peucker(points[index:], epsilon)
