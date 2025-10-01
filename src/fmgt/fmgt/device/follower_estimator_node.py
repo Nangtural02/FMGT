@@ -1,24 +1,30 @@
 # 파일명: follower_estimator_node.py
 # 경로: fmgt/estimation/follower_estimator_node.py
 """
-Follower Estimator Node (수정 버전)
+Follower Estimator Node (최종 버전)
 
 이 노드는 로봇(팔로워)의 위치와 자세를 추정하는 역할을 합니다.
 IMU와 Odometry 센서 데이터를 확장 칼만 필터(EKF)에 융합하여,
 월드 좌표계(`world`)에서의 로봇 위치를 안정적으로 계산합니다.
 
-- **핵심 수정 사항**:
-  1. EKF 초기화: 첫 Odometry 메시지(IMU의 절대 각도 포함)를 기준으로 EKF 상태 변수 [x, y, theta]를 즉시 초기화합니다. (시작 각도 부정확성 문제 해결)
-  2. Odometry 측정값: Odometry의 상대 변위가 아닌, **절대 위치/자세**를 EKF 보정 단계의 측정값으로 사용합니다.
-  3. IMU 예측: Angular Velocity (v_theta)는 더 이상 IMU 측정값으로 직접 덮어쓰지 않고, 일정한 속도를 유지한다고 예측하도록 수정하여 필터의 견고성을 높였습니다.
+- 주요 기능:
+  1. IMU(가속도, 각속도)를 사용한 EKF 예측(Predict) 단계 수행
+  2. Odometry(위치, 방향)를 사용한 EKF 보정(Update) 단계 수행
+  3. EKF의 'world' 좌표계를 항상 (0,0,0)에서 시작하도록 하여 디버깅 편의성 확보
+  4. RDP 알고리즘으로 최적화된 로봇의 이동 경로를 주기적으로 발행하여 시각적 디버깅 지원
 
 - 구독 (Subscriptions):
-  - /imu/data (sensor_msgs/Imu): EKF의 예측(predict) 단계에 사용됩니다. 가속도 및 각속도 데이터.
-  - /odom (nav_msgs/Odometry): EKF의 보정(update) 단계에 사용됩니다. Odometry의 절대 위치/자세.
+  - /imu/data (sensor_msgs/Imu): EKF의 예측 단계에 사용됩니다.
+  - /odom (nav_msgs/Odometry): EKF의 보정 단계에 사용됩니다.
 
 - 발행 (Publications):
   - /follower/estimated_pose (geometry_msgs/PoseStamped): 최종적으로 추정된 로봇의 위치와 자세.
-  - /tf (tf2_msgs/TFMessage): 'world' 프레임과 'odom' 프레임 간의 변환(transform) 정보.
+  - /tf (tf2_msgs/TFMessage): 'world' 프레임과 'odom' 프레임 간의 변환 정보.
+  - /debug/follower_estimated_path (nav_msgs/Path): 디버깅을 위한 로봇의 추정 이동 경로.
+
+- 파라미터 (Parameters):
+  - path_publish_period_sec (double): 디버깅 경로를 발행하는 주기 (초).
+  - rdp_epsilon (double): 경로 단순화(RDP)를 위한 임계값 (미터).
 """
 import rclpy
 import numpy as np
@@ -30,12 +36,13 @@ from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 from geometry_msgs.msg import PoseStamped, Quaternion, TransformStamped
 from sensor_msgs.msg import Imu
 from nav_msgs.msg import Odometry
+from nav_msgs.msg import Path # 경로 메시지를 위해 추가
 import tf2_ros
 
 from scipy.spatial.transform import Rotation
 
 # --- 상수 및 유틸리티 함수 ---
-GRAVITY = np.array([0, 0, -9.81]) # 중력 가속도 벡터
+GRAVITY = np.array([0, 0, -9.81])
 
 def normalize_angle(angle):
     """각도를 -pi 에서 +pi 사이로 정규화합니다."""
@@ -50,37 +57,42 @@ def yaw_to_quaternion(yaw):
 class FollowerEstimatorNode(Node):
     def __init__(self):
         super().__init__('follower_estimator_node')
+
+        # 디버깅 경로 발행을 위한 파라미터 선언
+        self.declare_parameter('path_publish_period_sec', 1.0)
+        self.declare_parameter('rdp_epsilon', 0.05)
         
-        # --- 발행자 및 TF 브로드캐스터 초기화 ---
+        # 발행자 및 TF 브로드캐스터 초기화
         self.follower_pose_pub = self.create_publisher(PoseStamped, '/follower/estimated_pose', 10)
+        self.path_pub = self.create_publisher(Path, '/debug/follower_estimated_path', 10) # 경로 발행자 추가
         self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
-        self.lock = threading.Lock() # 멀티스레드 환경에서의 데이터 동기화를 위한 Lock
+        self.lock = threading.Lock()
 
-        # --- EKF 상태 변수 및 공분산 행렬 초기화 ---
-        # 상태 변수 (9x1): [x, y, theta, vx, vy, v_theta, b_ax, b_ay, b_wz]
-        # 위치(x,y), 자세(theta), 속도(vx,vy), 각속도(v_theta), IMU 바이어스(b_ax,b_ay,b_wz)
+        # EKF 상태 변수 (9x1): [x, y, theta, vx, vy, v_theta, b_ax, b_ay, b_wz]
         self.x_f = np.zeros(9)
-        self.P_f = np.eye(9) * 0.1 # 상태 불확실성 공분산 행렬
+        self.P_f = np.eye(9) * 0.1
 
-        # 프로세스 노이즈 공분산 행렬 (Q_f): 모델의 불확실성을 나타냄
+        # 프로세스 및 측정 노이즈 공분산 행렬
         self.Q_f = np.diag([
-            1e-8, 1e-8, 1e-6,      # 위치/자세 노이즈
-            0.05**2, 0.05**2, 0.05**2, # 속도 노이즈
-            0.01**2, 0.01**2, (math.radians(0.1))**2 # 바이어스 노이즈
+            1e-8, 1e-8, 1e-6,
+            0.05**2, 0.05**2, 0.05**2,
+            0.01**2, 0.01**2, (math.radians(0.1))**2
         ])
-        
-        # 측정 노이즈 공분산 행렬 (R_odom): Odometry 센서의 노이즈 (절대 위치/자세)
         odom_pos_var = 0.05**2
         odom_yaw_var = (math.radians(0.05))**2
         self.R_odom = np.diag([odom_pos_var, odom_pos_var, odom_yaw_var])
         
-        # --- 초기화 관련 변수 ---
+        # 초기화 관련 변수
         self.is_initialized = False
         self.last_imu_timestamp = None
-        # [삭제] initial_odom_pos, initial_odom_yaw는 EKF 상태를 직접 초기화하도록 변경하여 필요 없어짐.
-        self.last_odom_pose = None # world->odom TF 계산에 사용
+        self.last_odom_pose = None
+        self.initial_odom_pos = None
+        self.initial_odom_yaw = 0.0
 
-        # --- 구독자 초기화 ---
+        # 디버깅 경로 저장을 위한 리스트
+        self.estimated_path_history = []
+
+        # 구독자 초기화
         sensor_qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
             history=HistoryPolicy.KEEP_LAST,
@@ -88,6 +100,10 @@ class FollowerEstimatorNode(Node):
         )
         self.imu_sub = self.create_subscription(Imu, '/imu/data', self.imu_predict_callback, sensor_qos)
         self.odom_sub = self.create_subscription(Odometry, '/odom', self.odom_update_callback, sensor_qos)
+        
+        # 경로 발행을 위한 주기적인 타이머 생성
+        path_pub_period = self.get_parameter('path_publish_period_sec').value
+        self.path_timer = self.create_timer(path_pub_period, self.publish_estimated_path)
         
         self.get_logger().info("Follower Estimator Node 시작됨.")
         
@@ -104,75 +120,60 @@ class FollowerEstimatorNode(Node):
                 return
             dt = current_timestamp - self.last_imu_timestamp
             self.last_imu_timestamp = current_timestamp
-            if not (0 < dt < 0.5): # 비정상적인 dt 값은 무시
+            if not (0 < dt < 0.5):
                 return
             
-            # IMU 데이터 추출 및 중력 보상
+            # IMU 데이터 처리 및 상태 예측
             q_orientation = np.array([imu_msg.orientation.x, imu_msg.orientation.y, imu_msg.orientation.z, imu_msg.orientation.w])
             accel_original = np.array([imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, imu_msg.linear_acceleration.z])
-            omega_original = np.array([imu_msg.angular_velocity.x, imu_msg.angular_velocity.y, imu_msg.angular_velocity.z])
             
             imu_rotation = Rotation.from_quat(q_orientation)
             pure_accel = accel_original - imu_rotation.inv().apply(GRAVITY)
             
-            # 추정된 바이어스를 사용하여 IMU 측정값 보정
             b_ax, b_ay, b_wz = self.x_f[6], self.x_f[7], self.x_f[8]
             ax_local = pure_accel[0] - b_ax
             ay_local = pure_accel[1] - b_ay
-            omega_z_local = omega_original[2] - b_wz
             
-            # 로봇 좌표계의 가속도를 월드 좌표계로 변환
             theta_f = self.x_f[2]
             cos_th, sin_th = math.cos(theta_f), math.sin(theta_f)
             ax_world = ax_local * cos_th - ay_local * sin_th
             ay_world = ax_local * sin_th + ay_local * cos_th
             
-            # --- 상태 예측 (State Prediction) ---
-            # 운동학 모델을 기반으로 다음 상태를 예측
-            self.x_f[0] += self.x_f[3] * dt  # x += vx*dt
-            self.x_f[1] += self.x_f[4] * dt  # y += vy*dt
-            self.x_f[2] = normalize_angle(self.x_f[2] + self.x_f[5] * dt) # theta += v_theta*dt
-            self.x_f[3] += ax_world * dt     # vx += ax*dt
-            self.x_f[4] += ay_world * dt     # vy += ay*dt
-            # [수정] v_theta 예측: Constant Velocity Model을 따름 (IMU 측정값으로 직접 덮어쓰지 않음)
-            # self.x_f[5] = omega_z_local # <-- 기존의 문제적인 코드 제거
-            # self.x_f[5]는 예측 단계에서 변하지 않고, Odometry update 시 보정되거나 
-            # 다음 텀에서 IMU 바이어스를 통해 간접적으로 영향을 받음.
+            self.x_f[0] += self.x_f[3] * dt
+            self.x_f[1] += self.x_f[4] * dt
+            self.x_f[2] = normalize_angle(self.x_f[2] + self.x_f[5] * dt)
+            self.x_f[3] += ax_world * dt
+            self.x_f[4] += ay_world * dt
             
-            # 상태 전이 행렬(F_f, Jacobian) 계산
+            # 상태 전이 행렬 계산 및 공분산 예측
             F_f = np.eye(9)
             F_f[0, 3] = dt; F_f[1, 4] = dt; F_f[2, 5] = dt
             F_f[3, 2] = (-ax_local * sin_th - ay_local * cos_th) * dt
             F_f[4, 2] = ( ax_local * cos_th - ay_local * sin_th) * dt
-            # [수정] v_theta가 omega_z_local로 덮어쓰이지 않으므로, 아래 바이어스 영향은
-            # v_theta에 대한 변화가 아닌 바이어스 자체의 예측에 영향을 미치도록 수정될 수 있으나,
-            # 현재 코드의 F_f 구조를 유지하며, F_f[5, 8] 항을 제거하거나 0으로 둠
-            # (바이어스 예측은 EKF의 고급 주제이므로, 여기서는 v_theta에 대한 직접적인 영향 항만 제거)
-            # F_f[5, 8] = -dt # <-- 원래 코드에 있던 항을 제거하고 0으로 둠 (F_f는 np.eye(9)로 시작하므로 F_f[5, 8]=0)
-            
             F_f[3, 6] = -cos_th * dt; F_f[3, 7] = sin_th * dt
             F_f[4, 6] = -sin_th * dt; F_f[4, 7] = -cos_th * dt
             
-            # 공분산 예측: P = F * P * F^T + Q
             self.P_f = F_f @ self.P_f @ F_f.T + self.Q_f * dt
 
-            # --- 예측된 위치 발행 ---
+            # 예측된 위치 발행
             f_pose = PoseStamped()
             f_pose.header = imu_msg.header
             f_pose.header.frame_id = 'world'
             f_pose.pose.position.x = self.x_f[0]
             f_pose.pose.position.y = self.x_f[1]
-            f_pose.pose.position.z = 0.0 # 2D 환경이므로 z는 0으로 고정
+            f_pose.pose.position.z = 0.0
             f_pose.pose.orientation = yaw_to_quaternion(self.x_f[2])
             self.follower_pose_pub.publish(f_pose)
 
-            # --- world -> odom TF 발행 ---
+            # 디버깅을 위해 추정된 경로 기록
+            self.estimated_path_history.append([self.x_f[0], self.x_f[1]])
+
+            # world -> odom TF 발행
             if self.last_odom_pose:
                 T_world_base = np.eye(4)
                 T_world_base[:3, :3] = Rotation.from_euler('z', self.x_f[2]).as_matrix()
                 T_world_base[:2, 3] = self.x_f[:2]
                 
-                # odom_msg.pose.pose가 이미 last_odom_pose에 저장됨
                 T_odom_base = np.eye(4)
                 q_o = self.last_odom_pose.orientation
                 T_odom_base[:3, :3] = Rotation.from_quat([q_o.x, q_o.y, q_o.z, q_o.w]).as_matrix()
@@ -192,48 +193,89 @@ class FollowerEstimatorNode(Node):
     def odom_update_callback(self, odom_msg):
         """Odometry 데이터를 사용하여 EKF의 보정(update) 단계를 수행합니다."""
         with self.lock:
-            # TF 발행을 위해 최신 Odometry 포즈 저장
-            self.last_odom_pose = odom_msg.pose.pose 
+            self.last_odom_pose = odom_msg.pose.pose
             
-            # 현재 Odometry에서 절대 위치/방향 추출
-            q_odom = odom_msg.pose.pose.orientation
-            odom_yaw = Rotation.from_quat([q_odom.x, q_odom.y, q_odom.z, q_odom.w]).as_euler('zyx')[0]
-            odom_pos = np.array([odom_msg.pose.pose.position.x, odom_msg.pose.pose.position.y])
+            current_q_odom = odom_msg.pose.pose.orientation
+            current_odom_yaw = Rotation.from_quat([current_q_odom.x, current_q_odom.y, current_q_odom.z, current_q_odom.w]).as_euler('zyx')[0]
+            current_odom_pos = np.array([odom_msg.pose.pose.position.x, odom_msg.pose.pose.position.y])
 
             if not self.is_initialized:
-                # [수정] EKF 상태 변수(x_f)를 첫 측정값(Odometry의 절대 포즈)으로 즉시 초기화
-                self.x_f[0] = odom_pos[0]
-                self.x_f[1] = odom_pos[1]
-                self.x_f[2] = odom_yaw
-                
-                # [수정] 공분산 P_f도 초기화 불확실성을 반영하도록 조정 (선택적)
-                self.P_f[[0, 1, 2], [0, 1, 2]] = self.R_odom.diagonal() * 1.0 # 위치/각도 불확실성 설정
-
+                # 첫 Odometry 메시지를 '기준점'으로 저장하고 EKF는 (0,0)에서 시작
+                self.initial_odom_pos = current_odom_pos
+                self.initial_odom_yaw = current_odom_yaw
                 self.is_initialized = True
-                self.get_logger().info(f"Follower EKF 초기화 성공! Initial Pose: x={self.x_f[0]:.2f}, y={self.x_f[1]:.2f}, yaw={math.degrees(self.x_f[2]):.2f} deg")
+                
+                self.get_logger().info(f"Follower EKF 초기화. Odom 기준점 설정: pos=({self.initial_odom_pos[0]:.2f}, {self.initial_odom_pos[1]:.2f}), yaw={math.degrees(self.initial_odom_yaw):.2f} deg. EKF는 (0,0)에서 시작.")
                 return
             
-            # [수정] Odometry의 절대 위치와 각도를 측정값으로 사용 (z)
-            z = np.array([odom_pos[0], odom_pos[1], odom_yaw])
+            # 현재 Odometry 값을 '기준점'에 대한 상대 변위로 변환하여 측정값(z) 생성
+            delta_pos_world = current_odom_pos - self.initial_odom_pos
+            cos_init = math.cos(-self.initial_odom_yaw)
+            sin_init = math.sin(-self.initial_odom_yaw)
+            relative_x = delta_pos_world[0] * cos_init - delta_pos_world[1] * sin_init
+            relative_y = delta_pos_world[0] * sin_init + delta_pos_world[1] * cos_init
+            relative_yaw = normalize_angle(current_odom_yaw - self.initial_odom_yaw)
             
-            # 예측된 측정값 (h(x)) - EKF 상태의 위치/방향
+            z = np.array([relative_x, relative_y, relative_yaw])
             h_x = self.x_f[[0, 1, 2]]
             
-            # 측정 모델의 Jacobian (H_f)
             H_f = np.zeros((3, 9)); H_f[0, 0]=1; H_f[1, 1]=1; H_f[2, 2]=1
             
-            # 측정 오차 (Innovation)
             y_err = z - h_x
-            y_err[2] = normalize_angle(y_err[2]) # 각도 오차는 정규화 (필수)
+            y_err[2] = normalize_angle(y_err[2])
             
-            # 칼만 게인(K) 계산
             S = H_f @ self.P_f @ H_f.T + self.R_odom
             K = self.P_f @ H_f.T @ np.linalg.inv(S)
             
-            # 상태 및 공분산 보정
             self.x_f += K @ y_err
-            self.x_f[2] = normalize_angle(self.x_f[2]) # 보정된 각도도 정규화
+            self.x_f[2] = normalize_angle(self.x_f[2])
             self.P_f = (np.eye(9) - K @ H_f) @ self.P_f
+
+    def publish_estimated_path(self):
+        """주기적으로 추정된 경로(Path)를 RDP 알고리즘으로 단순화하여 발행합니다."""
+        with self.lock:
+            if len(self.estimated_path_history) < 2:
+                return
+
+            epsilon = self.get_parameter('rdp_epsilon').value
+            simplified_points = self._douglas_peucker(self.estimated_path_history, epsilon)
+            
+            path_msg = Path()
+            path_msg.header.stamp = self.get_clock().now().to_msg()
+            path_msg.header.frame_id = 'world'
+            
+            for point in simplified_points:
+                pose = PoseStamped()
+                pose.header = path_msg.header
+                pose.pose.position.x = point[0]
+                pose.pose.position.y = point[1]
+                pose.pose.orientation.w = 1.0 # 기본 방향
+                path_msg.poses.append(pose)
+            
+            self.path_pub.publish(path_msg)
+    
+    def _douglas_peucker(self, points, epsilon):
+        """RDP 알고리즘을 이용해 포인트 리스트를 단순화합니다."""
+        if len(points) < 3:
+            return points
+            
+        dmax, index = 0.0, 0
+        p1, p_end = np.array(points[0]), np.array(points[-1])
+        
+        # 시작점과 끝점을 잇는 직선과의 거리가 가장 먼 점을 찾음
+        for i in range(1, len(points) - 1):
+            d = np.linalg.norm(np.cross(p_end - p1, p1 - np.array(points[i]))) / np.linalg.norm(p_end - p1)
+            if d > dmax:
+                index, dmax = i, d
+        
+        # 가장 먼 거리가 임계값(epsilon)보다 크면 재귀적으로 단순화 수행
+        if dmax > epsilon:
+            rec1 = self._douglas_peucker(points[:index + 1], epsilon)
+            rec2 = self._douglas_peucker(points[index:], epsilon)
+            return rec1[:-1] + rec2
+        else:
+            return [points[0], points[-1]]
+
 
 def main(args=None):
     """노드를 초기화하고 실행합니다."""
