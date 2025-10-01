@@ -61,8 +61,8 @@ class LeaderEstimatorNode(Node):
         # --- 파라미터 선언 (새로운 불확실성 지표에 맞게 수정) ---
         self.declare_parameter('anchor_forward_offset', 0.25)
         self.declare_parameter('anchor_width', 0.4)
-        self.declare_parameter('ekf_process_noise', 0.3)
-        self.declare_parameter('ekf_measurement_noise', 0.3*2)
+        self.declare_parameter('ekf_process_noise', 0.6**2)
+        self.declare_parameter('ekf_measurement_noise', 0.3**2)
 
 
         # --- 발행자 ---
