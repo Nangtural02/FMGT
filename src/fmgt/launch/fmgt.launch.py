@@ -34,7 +34,7 @@ def generate_launch_description():
     )
     path_postprocessor_node = Node(
         package='fmgt',
-        executable='path_postprocessor',
+        executable='point_postprocessor',
         name='path_postprocessor_node',
         output='screen',
         # parameters=[        ]
@@ -44,13 +44,7 @@ def generate_launch_description():
         executable='path_controller',
         name='path_controller_node',
         output='screen',
-        parameters=[
-            {'target_distance': 0.8},
-            {'kp_pos': 0.7},
-            {'kp_vel': 0.5},
-            {'max_linear_speed': 0.22},
-            {'max_angular_speed': 1.0}
-        ]
+
     )
     # LaunchDescription 객체에 실행할 노드들을 리스트로 담아 반환
     return LaunchDescription([

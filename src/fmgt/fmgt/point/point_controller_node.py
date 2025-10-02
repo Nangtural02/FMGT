@@ -51,12 +51,7 @@ class PointControllerNode(Node):
         self.declare_parameter('kp_pos', 0.5)
         self.declare_parameter('approach_max_linear_speed', 1.5)
         self.declare_parameter('approach_max_angular_speed', 1.0) # 각속도는 하나의 max값만 사용
-        self.declare_parameter('follow_max_linear_speed', 0.2)
-        
-        # 기존 Align 관련 파라미터 (현재 로직에서는 직접 사용되지 않음)
-        self.declare_parameter('align_rot_speed', 1.0)
-        self.declare_parameter('align_angle_complete_deg', 3.0)
-        self.declare_parameter('align_trigger_angle_deg', 30.0)
+        self.declare_parameter('follow_max_linear_speed', 0.6)
 
         # --- 상태 머신 변수 제거 ---
         # self.robot_state = 'Stop' ... etc.
