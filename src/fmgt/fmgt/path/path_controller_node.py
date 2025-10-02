@@ -38,7 +38,7 @@ def normalize_angle(angle): return (angle + math.pi) % (2 * math.pi) - math.pi
 class PathControllerNode(Node):
     def __init__(self):
         super().__init__('path_controller_node')
-        self.declare_parameter('follow_dist_thresh', 1.0)
+        self.declare_parameter('follow_dist_thresh', 1.2)
         self.declare_parameter('lookahead_distance', 2.5)
         self.declare_parameter('approach_dist_thresh', 3.0)
         self.declare_parameter('kp_angle', 2.0)

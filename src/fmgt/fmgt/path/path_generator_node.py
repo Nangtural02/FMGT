@@ -43,9 +43,9 @@ def yaw_to_quaternion(yaw):
 class PathGeneratorNode(Node):
     def __init__(self):
         super().__init__('path_generator_node')
-        self.declare_parameter('history_length', 30)
+        self.declare_parameter('history_length', 20)
         self.declare_parameter('min_points_for_path', 10)
-        self.declare_parameter('douglas_peucker_epsilon', 0.2)
+        self.declare_parameter('douglas_peucker_epsilon', 0.3)
         self.declare_parameter('bezier_resolution', 50)
 
         self.path_pub = self.create_publisher(Path, '/controller/short_term_path', 10)

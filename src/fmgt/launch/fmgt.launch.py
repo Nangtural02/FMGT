@@ -52,6 +52,6 @@ def generate_launch_description():
         follower_estimator_node,
         leader_estimator_node,
         path_generator_node,
-        path_postprocessor_node,
+        # path_postprocessor_node,
         path_controller_node
     ])

@@ -38,7 +38,14 @@ from rclpy.node import Node
 from geometry_msgs.msg import PointStamped, Twist, PoseStamped
 from scipy.spatial.transform import Rotation
 
-def quaternion_to_yaw(q): return Rotation.from_quat([q.x, q.y, q.z, q.w]).as_euler('zyx')[0]
+def quaternion_to_yaw(q):
+    """
+    쿼터니언(geometry_msgs/Quaternion)에서 안정적으로 Yaw 각도를 계산합니다.
+    scipy의 as_euler()에서 발생하는 180도 플립 현상을 방지합니다.
+    """
+    siny_cosp = 2 * (q.w * q.z + q.x * q.y)
+    cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z)
+    return math.atan2(siny_cosp, cosy_cosp)
 def normalize_angle(angle): return (angle + math.pi) % (2 * math.pi) - math.pi
 
 class PointControllerNode(Node):

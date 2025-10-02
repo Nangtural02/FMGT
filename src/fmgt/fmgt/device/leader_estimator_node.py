@@ -62,7 +62,7 @@ class LeaderEstimatorNode(Node):
         self.declare_parameter('anchor_forward_offset', 0.25)
         self.declare_parameter('anchor_width', 0.4)
         self.declare_parameter('ekf_process_noise', 0.6**2)
-        self.declare_parameter('ekf_measurement_noise', 0.3**2)
+        self.declare_parameter('ekf_measurement_noise', 0.35**2)
 
 
         # --- 발행자 ---

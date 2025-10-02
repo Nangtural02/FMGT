@@ -37,7 +37,7 @@ class PointPostprocessorNode(Node):
         super().__init__('point_postprocessor_node')
         
         # --- 파라미터 선언 (KF 관련 파라미터 제거) ---
-        self.declare_parameter('leader_history_size', 15)
+        self.declare_parameter('leader_history_size', 10)
         self.declare_parameter('goal_update_threshold', 0.3)
 
         # --- 발행자 ---
