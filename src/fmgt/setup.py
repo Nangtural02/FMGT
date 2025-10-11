@@ -5,7 +5,7 @@ package_name = 'fmgt'
 
 setup(
     name=package_name,
-    version='6.1.1',
+    version='7.0.0',
     packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -26,6 +26,8 @@ setup(
             'uwb_publisher = fmgt.device.uwb_publisher_node:main',
             'follower_estimator = fmgt.device.follower_esitimator_node:main',
             'leader_estimator = fmgt.device.leader_estimator_node:main',
+            'uwb_publisher4 = fmgt.device.uwb_publisher_4_anchor_node:main',
+            'leader_estimator4 = fmgt.device.leader_estimator_4_anchor_node:main',
 
             #point
             'point_controller = fmgt.point.point_controller_node:main', 
@@ -38,6 +40,7 @@ setup(
 
             #simulation
             'robot_simulator = fmgt.simulation.robot_simulator_node:main',
+            'robot_simulator4 = fmgt.simulation.robot_simulator_4_anchor_node:main',
             'leader_teleop = fmgt.simulation.leader_teleop_node:main',
         ],
     },

@@ -9,7 +9,7 @@ def generate_launch_description():
     # 1. 시뮬레이터 노드: UWB, 로봇/리더의 위치를 시뮬레이션
     robot_simulator_node = Node(
         package='fmgt', # 실제 패키지 이름으로 수정하세요
-        executable='robot_simulator', # setup.py에 등록된 이름
+        executable='robot_simulator4', # setup.py에 등록된 이름
         name='robot_simulator_node',
         output='screen'
     )
@@ -19,7 +19,7 @@ def generate_launch_description():
     #    (실행 파일 이름은 setup.py에 정의된 이름을 사용해야 합니다)
     leader_estimator_node = Node(
         package='fmgt',
-        executable='leader_estimator', # 예시 실행파일 이름
+        executable='leader_estimator4', # 예시 실행파일 이름
         name='leader_estimator_node',
         output='screen'
     )
@@ -51,6 +51,6 @@ def generate_launch_description():
         # 테스트 대상 알고리즘
         leader_estimator_node,
         point_postprocessor_node,
-        # path_generator_node, # 경로 기반 테스트 시 주석 해제
+        path_generator_node, # 경로 기반 테스트 시 주석 해제
         point_controller_node, # 혹은 path_controller_node
     ])
